@@ -1,1 +1,63 @@
-
+@font-face {
+    font-family: 'Agbalumo';
+    src: url('Agbalumo.ttf') format('truetype');
+    font-display: swap;
+}
+body {
+    font-family: 'Agbalumo', sans-serif;
+    background-color: #FFFFFF;
+    color: #4D7E3E;
+    margin: 0;
+    padding: 0;
+}
+header {
+    background-color: #31C48D;
+    padding: 20px;
+    text-align: center;
+}
+header img {
+    max-width: 150px;
+    height: auto;
+}
+nav ul {
+    list-style: none;
+    padding: 0;
+    text-align: center;
+}
+nav ul li {
+    display: inline-block;
+    margin: 10px;
+}
+nav ul li a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 5px;
+}
+section {
+    padding: 20px;
+    text-align: center;
+    margin: 20px 0;
+}
+footer {
+    background-color: #4D7E3E;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    position: static;
+    width: 100%;
+    bottom: 0;
+}
+@media (max-width: 768px) {
+    nav ul li {
+        display: block;
+        margin: 10px 0;
+    }
+    header {
+        padding: 10px;
+    }
+    section {
+        padding: 10px;
+    }
+}
