@@ -9,6 +9,7 @@ span,
 a {
     font-family: 'Open Sans',
     sans-serif !important;
+    color: #4D7E3E !important;
 }
 
 h1,
@@ -20,10 +21,11 @@ h6,
 nav ul li a {
     font-family: 'Agbalumo',
     sans-serif;
+    color: #4D7E3E;  /* Changed to #4D7E3E  */
 }
 
 header {
-    background-color: #4D7E3E;
+    background-color: #31C48D;  /* Changed to #31C48D */
     padding: 20px;
     text-align: center;
 }
