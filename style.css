@@ -69,7 +69,7 @@ section {
 }
 
 #home img {
-    max-width: 100%; /* Ensures image does not overflow */
+    max-width: 60%; /* Ensures image does not overflow */
     height: auto; /* Maintain aspect ratio */
     display: block; /* Prevents inline spacing issues */
     margin: 0 auto; /* Centers the image */
