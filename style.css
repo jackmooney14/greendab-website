@@ -5,19 +5,27 @@
 body {
     font-family: 'Open Sans', sans-serif;
     color: #4D7E3E;
-    margin: 0; /*Reset default margin*/
+    margin: 0;
 }
 
-p, div, span, a {
-    font-family: inherit; /*Inherit from body*/
+p,
+div,
+span,
+a {
+    font-family: inherit;
     color: inherit;
 }
 
 /* Heading Styles */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: 'Agbalumo', sans-serif;
     color: #4D7E3E;
-    text-align: center; /*Added centering for headings*/
+    text-align: center;
 }
 
 /* Header Styles */
@@ -66,18 +74,18 @@ footer {
     color: #FFFFFF;
     text-align: center;
     padding: 10px;
-    position: static; /* or fixed, or sticky */
+    position: static;
     width: 100%;
     bottom: 0;
 }
 
 footer a {
     color: white;
-    text-decoration: none; /* Optional: removes underline from links */
+    text-decoration: none;
 }
 
 footer a:hover {
-    color: lightgray; /* Optional: changes link color on hover */
+    color: lightgray;
 }
 
 /* Responsive Styles */
@@ -86,7 +94,9 @@ footer a:hover {
         display: block;
         margin: 10px 0;
     }
-    header, section {
+
+    header,
+    section {
         padding: 10px;
     }
 }
