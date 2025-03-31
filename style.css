@@ -9,6 +9,7 @@ span,
 a {
     font-family: 'Open Sans',
     sans-serif !important;
+    color: #4D7E3E !important; /* Add !important to color */
 }
 
 h1,
