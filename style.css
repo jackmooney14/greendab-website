@@ -28,7 +28,7 @@ header {
     background-color: #31C48D;
     padding: 20px;
     text-align: center;
-    color: white; /* Added color: white; */
+    color: #FFFFFF;  /* Changed to #FFFFFF */
 }
 
 header img {
@@ -49,7 +49,7 @@ nav ul li {
 
 nav ul li a {
     text-decoration: none;
-    color: #FFFFFF;
+    color: #FFFFFF;  /* Changed to #FFFFFF */
     font-weight: bold;
     padding: 8px 12px;
     border-radius: 5px;
@@ -63,7 +63,7 @@ section {
 
 footer {
     background-color: #4D7E3E;
-    color: #FFFFFF; /* Added color: white; */
+    color: #FFFFFF;  /* Changed to #FFFFFF */
     text-align: center;
     padding: 10px;
     position: static;
