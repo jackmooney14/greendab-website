@@ -7,7 +7,7 @@
     <style>
         @font-face {
             font-family: 'Agbalumo';
-            src: url('Agbalumo.ttf') format('truetype');
+            src: url('Agbalumo.ttf') format('truetype'); /* Assuming Agbalumo.ttf is in the same directory */
             font-display: swap;
         }
         body {
@@ -23,51 +23,49 @@
             text-align: center;
         }
         header img {
-            max-width: 150px; /* Make logo responsive */
+            max-width: 150px;
             height: auto;
         }
         nav ul {
             list-style: none;
             padding: 0;
-            text-align: center; /* Center nav items */
+            text-align: center;
         }
         nav ul li {
-            display: inline-block; /* Change to inline-block */
-            margin: 10px; /* Add margin for spacing */
+            display: inline-block;
+            margin: 10px;
         }
         nav ul li a {
             text-decoration: none;
             color: white;
             font-weight: bold;
-            padding: 8px 12px; /* Add padding to links */
-            border-radius: 5px; /* Add border radius */
+            padding: 8px 12px;
+            border-radius: 5px;
         }
         section {
             padding: 20px;
             text-align: center;
-            margin: 20px 0; /* Add margin for spacing */
+            margin: 20px 0;
         }
         footer {
             background-color: #4D7E3E;
             color: white;
             text-align: center;
             padding: 10px;
-            position: static; /* Changed from fixed */
+            position: static;
             width: 100%;
             bottom: 0;
         }
-
-        /* Media Queries for Responsiveness */
         @media (max-width: 768px) {
             nav ul li {
-                display: block; /* Stack nav items on smaller screens */
+                display: block;
                 margin: 10px 0;
             }
             header {
-                padding: 10px; /* Reduce padding on smaller screens */
+                padding: 10px;
             }
             section {
-                padding: 10px; /* Reduce padding on smaller screens */
+                padding: 10px;
             }
         }
     </style>
@@ -90,28 +88,23 @@
             <h1>Welcome to greenDAB</h1>
             <p>Your digital radio network for South East London & North West Kent.</p>
         </section>
-
         <section id="about">
             <h2>About Us</h2>
             <p>greenDAB Limited is committed to enhancing digital radio services in your area.</p>
         </section>
-
         <section id="coverage">
             <h2>Coverage</h2>
             <p>Providing digital radio services to Greenwich, Bromley, Bexley, Lewisham, Dartford, and Gravesham.</p>
         </section>
-
         <section id="community">
             <h2>Community</h2>
             <p>Supporting local digital sound programme services and fostering diversity in broadcasting.</p>
         </section>
-
         <section id="contact">
             <h2>Contact Us</h2>
             <p>Email: hello@greendab.co.uk</p>
         </section>
     </main>
-
     <footer>
         <p>&copy; 2025 greenDAB Limited. All rights reserved.</p>
     </footer>
