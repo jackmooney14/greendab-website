@@ -30,7 +30,7 @@ h6 {
 
 /* Header Styles */
 header {
-    background-color: #4D7E3E; /* Swapped back to original */
+    background-color: #4D7E3E; /* Updated to match body text color */
     padding: 20px;
     text-align: center;
     color: #FFFFFF;
@@ -68,9 +68,14 @@ section {
     margin: 20px 0;
 }
 
+#home img {
+    max-width: 80%; /* Adjust width as needed */
+    height: auto; /* Maintain aspect ratio */
+}
+
 /* Footer Styles */
 footer {
-    background-color: #31C48D; /* Swapped back to original */
+    background-color: #31C48D; /* Updated to opposite green hex */
     color: #FFFFFF;
     text-align: center;
     padding: 10px;
