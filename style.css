@@ -69,8 +69,10 @@ section {
 }
 
 #home img {
-    max-width: 80%; /* Adjust width as needed */
+    max-width: 100%; /* Ensures image does not overflow */
     height: auto; /* Maintain aspect ratio */
+    display: block; /* Prevents inline spacing issues */
+    margin: 0 auto; /* Centers the image */
 }
 
 /* Footer Styles */
