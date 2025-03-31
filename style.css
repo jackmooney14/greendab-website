@@ -21,13 +21,14 @@ h6,
 nav ul li a {
     font-family: 'Agbalumo',
     sans-serif;
-    color: #4D7E3E;  /* Changed to #4D7E3E  */
+    color: #4D7E3E;
 }
 
 header {
-    background-color: #31C48D;  /* Changed to #31C48D */
+    background-color: #31C48D;
     padding: 20px;
     text-align: center;
+    color: white; /* Added color: white; */
 }
 
 header img {
@@ -62,7 +63,7 @@ section {
 
 footer {
     background-color: #4D7E3E;
-    color: white;
+    color: white; /* Added color: white; */
     text-align: center;
     padding: 10px;
     position: static;
