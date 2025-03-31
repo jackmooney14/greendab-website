@@ -8,7 +8,6 @@
         @font-face {
             font-family: 'Agbalumo';
             src: url('Agbalumo.ttf') format('truetype');
-            /* Add error handling for font loading */
             font-display: swap;
         }
         body {
@@ -23,32 +22,53 @@
             padding: 20px;
             text-align: center;
         }
+        header img {
+            max-width: 150px; /* Make logo responsive */
+            height: auto;
+        }
         nav ul {
             list-style: none;
             padding: 0;
+            text-align: center; /* Center nav items */
         }
         nav ul li {
-            display: inline;
-            margin: 0 15px;
+            display: inline-block; /* Change to inline-block */
+            margin: 10px; /* Add margin for spacing */
         }
         nav ul li a {
             text-decoration: none;
             color: white;
             font-weight: bold;
+            padding: 8px 12px; /* Add padding to links */
+            border-radius: 5px; /* Add border radius */
         }
         section {
             padding: 20px;
             text-align: center;
+            margin: 20px 0; /* Add margin for spacing */
         }
         footer {
             background-color: #4D7E3E;
             color: white;
             text-align: center;
             padding: 10px;
-            /* change to static or relative if needed */
-            position: static;
+            position: static; /* Changed from fixed */
             width: 100%;
             bottom: 0;
+        }
+
+        /* Media Queries for Responsiveness */
+        @media (max-width: 768px) {
+            nav ul li {
+                display: block; /* Stack nav items on smaller screens */
+                margin: 10px 0;
+            }
+            header {
+                padding: 10px; /* Reduce padding on smaller screens */
+            }
+            section {
+                padding: 10px; /* Reduce padding on smaller screens */
+            }
         }
     </style>
 </head>
@@ -67,7 +87,7 @@
     </header>
     <main>
         <section id="home">
-            <h1>Welcome to greenDAB</h1>
+            <h1>Welcome to GreenDAB</h1>
             <p>Your digital radio network for South East London & North West Kent.</p>
         </section>
 
