@@ -7,7 +7,7 @@
     <style>
         @font-face {
             font-family: 'Agbalumo';
-            src: url('Agbalumo.ttf') format('truetype');
+            src: url('Agbalumo.ttf') format('truetype'); /* Ensure font file is in the same directory */
         }
         body {
             font-family: 'Agbalumo', sans-serif;
@@ -43,7 +43,6 @@
             color: white;
             text-align: center;
             padding: 10px;
-            position: fixed;
             width: 100%;
             bottom: 0;
         }
@@ -67,7 +66,7 @@
         <h1>Welcome to GreenDAB</h1>
         <p>Your digital radio network for South East London & North West Kent.</p>
     </section>
-    
+
     <section id="about">
         <h2>About Us</h2>
         <p>GreenDAB Limited is committed to enhancing digital radio services in your area.</p>
@@ -77,12 +76,105 @@
         <h2>Coverage</h2>
         <p>Providing digital radio services to Greenwich, Bromley, Bexley, Lewisham, Dartford, and Gravesham.</p>
     </section>
-    
+
     <section id="community">
         <h2>Community</h2>
         <p>Supporting local digital sound programme services and fostering diversity in broadcasting.</p>
     </section>
-    
+
+    <section id="contact">
+        <h2>Contact Us</h2>
+        <p>Email: info@greendab.co.uk</p>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 GreenDAB Limited. All rights reserved.</p>
+    </footer>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>greenDAB - Digital Radio</title>
+    <style>
+        @font-face {
+            font-family: 'Agbalumo';
+            src: url('Agbalumo.ttf') format('truetype'); /* Ensure font file is in the same directory */
+        }
+        body {
+            font-family: 'Agbalumo', sans-serif;
+            background-color: #FFFFFF;
+            color: #4D7E3E;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #31C48D;
+            padding: 20px;
+            text-align: center;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin: 0 15px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+        }
+        section {
+            padding: 20px;
+            text-align: center;
+        }
+        footer {
+            background-color: #4D7E3E;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            width: 100%;
+            bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="logo.png" alt="greendab-high-resolution-logo.png" width="150">
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#coverage">Coverage</a></li>
+                <li><a href="#community">Community</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="home">
+        <h1>Welcome to GreenDAB</h1>
+        <p>Your digital radio network for South East London & North West Kent.</p>
+    </section>
+
+    <section id="about">
+        <h2>About Us</h2>
+        <p>GreenDAB Limited is committed to enhancing digital radio services in your area.</p>
+    </section>
+
+    <section id="coverage">
+        <h2>Coverage</h2>
+        <p>Providing digital radio services to Greenwich, Bromley, Bexley, Lewisham, Dartford, and Gravesham.</p>
+    </section>
+
+    <section id="community">
+        <h2>Community</h2>
+        <p>Supporting local digital sound programme services and fostering diversity in broadcasting.</p>
+    </section>
+
     <section id="contact">
         <h2>Contact Us</h2>
         <p>Email: info@greendab.co.uk</p>
