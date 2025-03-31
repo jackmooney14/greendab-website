@@ -1,34 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Agbalumo&display=swap');
 
-/* More Specific Body Styling */
-body,
-p,
-div,
-span,
-a {
-    font-family: 'Open Sans',
-    sans-serif !important;
-    color: #4D7E3E !important;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-nav ul li a {
-    font-family: 'Agbalumo',
-    sans-serif;
+/* Base Styles */
+body {
+    font-family: 'Open Sans', sans-serif;
     color: #4D7E3E;
+    margin: 0; /*Reset default margin*/
 }
 
+p, div, span, a {
+    font-family: inherit; /*Inherit from body*/
+    color: inherit;
+}
+
+/* Heading Styles */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Agbalumo', sans-serif;
+    color: #4D7E3E;
+    text-align: center; /*Added centering for headings*/
+}
+
+/* Header Styles */
 header {
     background-color: #31C48D;
     padding: 20px;
     text-align: center;
-    color: #FFFFFF;  /* Changed to #FFFFFF */
+    color: #FFFFFF;
 }
 
 header img {
@@ -36,6 +33,7 @@ header img {
     height: auto;
 }
 
+/* Navigation Styles */
 nav ul {
     list-style: none;
     padding: 0;
@@ -49,37 +47,37 @@ nav ul li {
 
 nav ul li a {
     text-decoration: none;
-    color: #FFFFFF;  /* Changed to #FFFFFF */
+    color: #FFFFFF;
     font-weight: bold;
     padding: 8px 12px;
     border-radius: 5px;
 }
 
+/* Section Styles */
 section {
     padding: 20px;
     text-align: center;
     margin: 20px 0;
 }
 
+/* Footer Styles */
 footer {
     background-color: #4D7E3E;
-    color: #FFFFFF;  /* Changed to #FFFFFF */
+    color: #FFFFFF;
     text-align: center;
     padding: 10px;
-    position: static;
+    position: static; /* or fixed, or sticky */
     width: 100%;
     bottom: 0;
 }
 
+/* Responsive Styles */
 @media (max-width: 768px) {
     nav ul li {
         display: block;
         margin: 10px 0;
     }
-    header {
-        padding: 10px;
-    }
-    section {
+    header, section {
         padding: 10px;
     }
 }
