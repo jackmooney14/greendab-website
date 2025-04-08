@@ -6,63 +6,16 @@
     <title>greenDAB - Contact Us</title>
     <link rel="stylesheet" href="style.css">
     <style type="text/css">
-        .form-all {
+        #jotform-embed-container {
+            width: 100%;
             max-width: 752px; /* Adjust as needed */
-            margin: 0 auto; /* Center the form */
-            padding: 20px;
-            border: 1px solid #ccc; /* Optional border */
-            border-radius: 5px; /* Optional rounded corners */
-            background-color: #f9f9f9; /* Optional background color */
+            margin: 0 auto;
+            border: none; /* Remove default iframe border */
         }
-        .form-section {
-            padding: 0;
-            margin: 0;
-        }
-        .form-header-group {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .form-label {
-            font-weight: bold;
-            margin-bottom: 5px;
-            display: block;
-        }
-        .form-input {
+        #JotFormIFrame-250972215478059 {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-        .form-textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-            height: 150px; /* Adjust height as needed */
-        }
-        .form-buttons-wrapper {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .form-submit-button {
-            background-color: #007bff; /* Example button color */
-            color: white;
-            padding: 12px 20px;
+            height: 600px; /* Adjust the height as needed to fit your form */
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-        }
-        .form-submit-button:hover {
-            background-color: #0056b3;
-        }
-        .form-cover-wrapper {
-            text-align: center;
-            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -83,16 +36,42 @@
         <section id="contact">
             <h2>Contact Us</h2>
             <p>Please fill out the form below to get in touch with us.</p>
-            <script>window.enableEventObserver=true</script>
-            <script src="https://cdn02.jotfor.ms/static/prototype.forms.js?v=3.3.62128" type="text/javascript"></script>
-            <script src="https://cdn03.jotfor.ms/static/jotform.forms.js?v=3.3.62128" type="text/javascript"></script>
-            <script src="https://cdn01.jotfor.ms/js/punycode-1.4.1.min.js?v=3.3.62128" type="text/javascript" defer></script>
-            <script src="https://cdn01.jotfor.ms/s/umd/97cdfb6043f/for-form-branding-footer.js?v=3.3.62128" type="text/javascript" defer></script>
-            <script src="https://cdn02.jotfor.ms/js/vendor/smoothscroll.min.js?v=3.3.62128" type="text/javascript"></script>
-            <script src="https://cdn03.jotfor.ms/js/errorNavigation.js?v=3.3.62128" type="text/javascript"></script>
-            <script type="text/javascript">
-                JotForm.newDefaultTheme = true;
-                JotForm.extendsNewTheme = false;
-                JotForm.singleProduct = false;
-                JotForm.newPaymentUIForNewCreatedForms = true;
-                JotForm.texts = {"confirmEmail":"E-mail does not match","pleaseWait":"Please wait...","validateEmail":"You need to validate this e-mail","confirmClearForm":"Are you sure you want to clear the form","lessThan":"Your score should be less than or equal to","incompleteFields":"There are incomplete required fields. Please complete them.","required":"This field is required.","requireOne":"At least one field required.","requireEveryRow":"Every row is required.","requireEveryCell":"Every cell is required.","email
+            <div id="jotform-embed-container">
+                <iframe
+                    id="JotFormIFrame-250972215478059"
+                    title="Contact US"
+                    onload="window.parent.scrollTo(0,0)"
+                    allowtransparency="true"
+                    allowfullscreen="true"
+                    src="https://form.jotform.com/250972215478059"
+                    frameborder="0"
+                    style="min-width:100%;max-width:100%;height:539px;border:none;"
+                    scrolling="no"
+                >
+                </iframe>
+                <script type="text/javascript">
+                    var ifr = document.getElementById("JotFormIFrame-250972215478059");
+                    if (ifr) {
+                        var src = ifr.src;
+                        var iframeParams = [];
+                        if (window.location.href && window.location.href.indexOf("?") > -1) {
+                            iframeParams = iframeParams.concat(window.location.href.substring(window.location.href.indexOf("?") + 1).split('&'));
+                        }
+                        if (src && src.indexOf("?") > -1) {
+                            iframeParams = iframeParams.concat(src.substring(src.indexOf("?") + 1).split("&"));
+                            src = src.substring(0, src.indexOf("?"))
+                        }
+                        ifr.src = src + "?" + iframeParams.filter(function(obj) {
+                            return obj.length > 1 && obj.indexOf("=") > -1;
+                        }).join("&");
+                    }
+                    window.Joomla = window.Joomla || false;
+                    window.addEventListener("message", function(event) {
+                        var targetWindow = document.getElementById("JotFormIFrame-250972215478059").contentWindow;
+                        if (event.origin === "https://form.jotform.com" && event.data === "goodbye") {
+                            targetWindow.location.href = targetWindow.location.href;
+                        } else if (!!window.Joomla && typeof window.Joomla.getOptions === 'function' && event.origin === window.location.protocol + "//" + window.location.host && event.data === "loadJoomla") {
+                            Joomla.getOptions({});
+                        }
+                        if (event.origin === "https://form.jotform.com" && (event.data.sender === "jotform" || (event.data.sender === "form" && event.data.type === "load"))) {
+                            if (event
