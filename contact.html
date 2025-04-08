@@ -1,85 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>greenDAB - Community</title>
+    <title>greenDAB - Contact Us</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        #contact-form {
-            max-width: 600px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        #contact-form h2 {
-            text-align: center;
-            color: #4D7E3E;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-family: 'Open Sans',
-            sans-serif;
-        }
-
-        button[type="submit"] {
-            background-color: #4D7E3E;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            font-family: 'Agbalumo',
-            sans-serif;
-        }
-
-        button[type="submit"]:hover {
-            background-color: #31C48D;
-        }
-
-        #response-message {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
 </head>
-
 <body>
     <header>
         <img src="logo.png" alt="greendab logo" width="150">
@@ -94,109 +20,32 @@
         </nav>
     </header>
     <main>
-        <section id="community">
-            <h2>Community</h2>
-            <p>Supporting local digital sound programme services and fostering diversity in broadcasting.</p>
-        </section>
-
-        <section id="contact-form">
+        <section id="contact">
             <h2>Contact Us</h2>
-            <form id="contactForm" action="" method="POST">
-                <div class="form-group">
-                    <label for="name">Your Name</label>
-                    <input type="text" id="name" name="name" placeholder="Enter your name" required>
+            <p>Please fill out the form below to get in touch with us.</p>
+            <form action="mailto:hello@greendab.co.uk?subject=Website Contact Form Submission" method="post" enctype="text/plain">
+                <div>
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" required>
                 </div>
-                <div class="form-group">
-                    <label for="email">Your Email</label>
-                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                <div>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
                 </div>
-                <div class="form-group">
-                    <label for="subject">Subject</label>
-                    <input type="text" id="subject" name="subject" placeholder="Enter the subject" required>
+                <div>
+                    <label for="subject">Subject:</label>
+                    <input type="text" id="subject" name="subject">
                 </div>
-                <div class="form-group">
-                    <label for="message">Message</label>
-                    <textarea id="message" name="message" rows="5" placeholder="Enter your message" required></textarea>
+                <div>
+                    <label for="message">Message:</label>
+                    <textarea id="message" name="message" rows="5" required></textarea>
                 </div>
                 <button type="submit">Send Message</button>
             </form>
-            <div id="response-message"></div>
         </section>
     </main>
     <footer>
         <p>&copy; 2025 greenDAB Limited. All rights reserved.</p>
     </footer>
-
-    <script>
-        document.getElementById('contactForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent default form submission
-
-            var formData = new FormData(this);
-
-            fetch('', {  // Send to the same page
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
-            .then(data => {
-                document.getElementById('response-message').innerHTML = data;
-                if (data.includes("Thank you")) {
-                    document.getElementById('response-message').className = "success";
-                    document.getElementById('contactForm').reset(); // Clear the form
-                } else {
-                    document.getElementById('response-message').className = "error";
-                }
-            })
-            .catch(error => {
-                document.getElementById('response-message').innerHTML = "Oops! Something went wrong.";
-                document.getElementById('response-message').className = "error";
-            });
-        });
-    </script>
-
 </body>
-
 </html>
-<?php
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    // Get form data and sanitize it
-    $name = strip_tags(trim($_POST["name"]));
-    $email = strip_tags(trim($_POST["email"]));
-    $subject = strip_tags(trim($_POST["subject"]));
-    $message = strip_tags(trim($_POST["message"]));
-
-    // Validate form data
-    if (empty($name) || empty($email) || empty($subject) || empty($message)) {
-        http_response_code(400);
-        echo "Please fill all fields.";
-        exit;
-    }
-
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        http_response_code(400);
-        echo "Invalid email format.";
-        exit;
-    }
-
-    // Email configuration
-    $to = "hello@greendab.co.uk"; // Your email address
-    $mail_subject = "New Contact Form Submission: $subject";
-    $mail_body = "Name: $name\nEmail: $email\n\nMessage:\n$message";
-    $headers = "From: $email";
-
-    // Send the email
-    if (mail($to, $mail_subject, $mail_body, $headers)) {
-        http_response_code(200);
-        echo "Thank you! Your message has been sent.";
-    } else {
-        http_response_code(500);
-        echo "Oops! Something went wrong and we couldn't send your message.";
-    }
-
-} else {
-    http_response_code(403);
-    echo "There was a problem with your submission, please try again.";
-}
-
-?>
