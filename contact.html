@@ -18,6 +18,7 @@
 
         #JotFormIFrame-250972215478059 {
             width: 100%;
+            min-height: 500px; /* Adjust this value to your desired minimum height */
             border: none;
         }
     </style>
@@ -51,7 +52,7 @@
                     function setIframeHeight() {
                         if (ifr) {
                             var formHeight = ifr.contentWindow.document.body.scrollHeight;
-                            ifr.style.height = formHeight + 'px';
+                            ifr.style.height = Math.max(formHeight, 500) + 'px'; // Ensure it's at least 500px
                         }
                     }
 
