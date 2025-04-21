@@ -18,7 +18,8 @@
 
         #JotFormIFrame-250972215478059 {
             width: 100%;
-            min-height: 500px; /* Adjust this value to your desired minimum height */
+            min-height: 500px;
+            /* Adjust this value to your desired minimum height */
             border: none;
         }
     </style>
@@ -38,78 +39,80 @@
         </nav>
     </header>
     <main>
-        <section id="contact">
-            <h2>Contact Us</h2>
-            <p>Please fill out the form below to get in touch with us.</p>
-            <div id="jotform-embed-container">
-                <iframe id="JotFormIFrame-250972215478059" title="Contact US" onload="window.parent.scrollTo(0,0)"
-                    allowtransparency="true" allowfullscreen="true" src="https://form.jotform.com/250972215478059"
-                    frameborder="0" style="min-width:100%;max-width:100%;border:none;" scrolling="yes">
-                </iframe>
-                <script type="text/javascript">
-                    var ifr = document.getElementById("JotFormIFrame-250972215478059");
+        <div class="content-wrapper">
+            <section id="contact">
+                <h2>Contact Us</h2>
+                <p>Please fill out the form below to get in touch with us.</p>
+                <div id="jotform-embed-container">
+                    <iframe id="JotFormIFrame-250972215478059" title="Contact US" onload="window.parent.scrollTo(0,0)"
+                        allowtransparency="true" allowfullscreen="true" src="https://form.jotform.com/250972215478059"
+                        frameborder="0" style="min-width:100%;max-width:100%;border:none;" scrolling="yes">
+                    </iframe>
+                    <script type="text/javascript">
+                        var ifr = document.getElementById("JotFormIFrame-250972215478059");
 
-                    function setIframeHeight() {
+                        function setIframeHeight() {
+                            if (ifr) {
+                                var formHeight = ifr.contentWindow.document.body.scrollHeight;
+                                ifr.style.height = Math.max(formHeight, 500) + 'px'; // Ensure it's at least 500px
+                            }
+                        }
+
                         if (ifr) {
-                            var formHeight = ifr.contentWindow.document.body.scrollHeight;
-                            ifr.style.height = Math.max(formHeight, 500) + 'px'; // Ensure it's at least 500px
-                        }
-                    }
-
-                    if (ifr) {
-                        var src = ifr.src;
-                        var iframeParams = [];
-                        if (window.location.href && window.location.href.indexOf("?") > -1) {
-                            iframeParams = iframeParams.concat(window.location.href.substring(window.location.href.indexOf("?") + 1).split('&'));
-                        }
-                        if (src && src.indexOf("?") > -1) {
-                            iframeParams = iframeParams.concat(src.substring(src.indexOf("?") + 1).split("&"));
-                            src = src.substring(0, src.indexOf("?"))
-                        }
-                        ifr.src = src + "?" + iframeParams.filter(function(obj) {
-                            return obj.length > 1 && obj.indexOf("=") > -1;
-                        }).join("&");
-
-                        // Initial height and dynamic updates
-                        setIframeHeight();
-                        ifr.onload = setIframeHeight; // Reset height when the form loads
-                        ifr.contentWindow.document.addEventListener('DOMContentLoaded', setIframeHeight); // When the form content loads
-                        ifr.contentWindow.document.addEventListener('load', setIframeHeight);
-                        ifr.contentWindow.document.addEventListener('resize', setIframeHeight);
-                        setInterval(setIframeHeight, 200); // Periodically check and update
-                    }
-
-                    window.Joomla = window.Joomla || false;
-                    window.addEventListener("message", function(event) {
-                        var targetWindow = document.getElementById("JotFormIFrame-250972215478059").contentWindow;
-                        if (event.origin === "https://form.jotform.com" && event.data === "goodbye") {
-                            targetWindow.location.href = targetWindow.location.href;
-                        } else if (!!window.Joomla && typeof window.Joomla.getOptions === 'function' && event.origin === window.location.protocol + "//" + window.location.host && event.data === "loadJoomla") {
-                            Joomla.getOptions({});
-                        }
-                        if (event.origin === "https://form.jotform.com" && (event.data.sender === "jotform" || (event.data.sender === "form" && event.data.type === "load"))) {
-                            if (event.data.height) {
-                                document.getElementById("JotFormIFrame-250972215478059").style.height = (parseInt(event.data.height) + 20) + "px";
+                            var src = ifr.src;
+                            var iframeParams = [];
+                            if (window.location.href && window.location.href.indexOf("?") > -1) {
+                                iframeParams = iframeParams.concat(window.location.href.substring(window.location.href.indexOf("?") + 1).split('&'));
                             }
-                            var scrollToParams = {};
-                            if (window.location.href.indexOf("?") > -1) {
-                                scrollToParams = new URLSearchParams(window.location.href.substring(window.location.href.indexOf("?") + 1));
-                                for (var param in event.data) {
-                                    scrollToParams.set(param, event.data[param]);
+                            if (src && src.indexOf("?") > -1) {
+                                iframeParams = iframeParams.concat(src.substring(src.indexOf("?") + 1).split("&"));
+                                src = src.substring(0, src.indexOf("?"))
+                            }
+                            ifr.src = src + "?" + iframeParams.filter(function(obj) {
+                                return obj.length > 1 && obj.indexOf("=") > -1;
+                            }).join("&");
+
+                            // Initial height and dynamic updates
+                            setIframeHeight();
+                            ifr.onload = setIframeHeight; // Reset height when the form loads
+                            ifr.contentWindow.document.addEventListener('DOMContentLoaded', setIframeHeight); // When the form content loads
+                            ifr.contentWindow.document.addEventListener('load', setIframeHeight);
+                            ifr.contentWindow.document.addEventListener('resize', setIframeHeight);
+                            setInterval(setIframeHeight, 200); // Periodically check and update
+                        }
+
+                        window.Joomla = window.Joomla || false;
+                        window.addEventListener("message", function(event) {
+                            var targetWindow = document.getElementById("JotFormIFrame-250972215478059").contentWindow;
+                            if (event.origin === "https://form.jotform.com" && event.data === "goodbye") {
+                                targetWindow.location.href = targetWindow.location.href;
+                            } else if (!!window.Joomla && typeof window.Joomla.getOptions === 'function' && event.origin === window.location.protocol + "//" + window.location.host && event.data === "loadJoomla") {
+                                Joomla.getOptions({});
+                            }
+                            if (event.origin === "https://form.jotform.com" && (event.data.sender === "jotform" || (event.data.sender === "form" && event.data.type === "load"))) {
+                                if (event.data.height) {
+                                    document.getElementById("JotFormIFrame-250972215478059").style.height = (parseInt(event.data.height) + 20) + "px";
                                 }
-                            } else {
-                                for (var param in event.data) {
-                                    scrollToParams[param] = event.data[param]
+                                var scrollToParams = {};
+                                if (window.location.href.indexOf("?") > -1) {
+                                    scrollToParams = new URLSearchParams(window.location.href.substring(window.location.href.indexOf("?") + 1));
+                                    for (var param in event.data) {
+                                        scrollToParams.set(param, event.data[param]);
+                                    }
+                                } else {
+                                    for (var param in event.data) {
+                                        scrollToParams[param] = event.data[param]
+                                    }
+                                }
+                                if (scrollToParams.get("scrollTo") === "true") {
+                                    window.scroll(0, document.getElementById("JotFormIFrame-250972215478059").offsetTop);
                                 }
                             }
-                            if (scrollToParams.get("scrollTo") === "true") {
-                                window.scroll(0, document.getElementById("JotFormIFrame-250972215478059").offsetTop);
-                            }
-                        }
-                    }, false);
-                </script>
-            </div>
-        </section>
+                        }, false);
+                    </script>
+                </div>
+            </section>
+        </div>
     </main>
     <footer>
         <p>&copy; 2025 greenDAB Limited. All rights reserved.</p>
