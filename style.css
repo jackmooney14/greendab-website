@@ -6,8 +6,11 @@ body {
     font-family: 'Open Sans', sans-serif;
     color: #4D7E3E;
     margin: 0;
+    padding: 0;
+    box-sizing: border-box; /* Ensures padding and margin don't affect layout */
 }
 
+/* Ensuring all paragraphs, divs, spans, and anchors inherit body font */
 p,
 div,
 span,
@@ -30,7 +33,7 @@ h6 {
 
 /* Header Styles */
 header {
-    background-color: #4D7E3E; /* Updated to match body text color */
+    background-color: #4D7E3E;
     padding: 20px;
     text-align: center;
     color: #FFFFFF;
@@ -61,6 +64,13 @@ nav ul li a {
     border-radius: 5px;
 }
 
+/* New Content Wrapper */
+.content-wrapper {
+    max-width: 1100px; /* Maximum width of the content */
+    margin: 0 auto;    /* Centers the content */
+    padding: 0 20px;   /* Adds padding on left and right */
+}
+
 /* Section Styles */
 section {
     padding: 20px;
@@ -68,11 +78,12 @@ section {
     margin: 20px 0;
 }
 
+/* Home Image Styles */
 #home img {
-    max-width: 60%; /* Ensures image does not overflow */
-    height: auto; /* Maintain aspect ratio */
-    display: block; /* Prevents inline spacing issues */
-    margin: 0 auto; /* Centers the image */
+    max-width: 60%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
 }
 
 /* Footer Styles */
@@ -105,5 +116,9 @@ footer a:hover {
     header,
     section {
         padding: 10px;
+    }
+
+    .content-wrapper {
+        padding: 0 15px; /* Reduced padding for smaller screens */
     }
 }
