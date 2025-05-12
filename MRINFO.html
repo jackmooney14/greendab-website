@@ -7,7 +7,8 @@
     <title>Transport Dashboard</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial,
+            sans-serif;
             background: #f4f4f4;
             margin: 0;
             padding: 10px;
@@ -31,7 +32,7 @@
         .container {
             display: flex;
             flex-direction: row;
-            gap: 15px;
+            gap: 10px;
             width: 100%;
             max-width: 1200px;
         }
@@ -39,20 +40,20 @@
         .info-section {
             display: flex;
             flex-direction: row;
-            gap: 15px;
+            gap: 10px;
             flex: 1;
         }
 
         .status-section {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
             flex: 1;
         }
 
         .card {
             background: white;
-            padding: 15px;
+            padding: 10px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             flex: 1;
@@ -62,39 +63,40 @@
         .card h2 {
             margin-top: 0;
             font-size: 1.4em;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-align: center;
         }
 
         #tfl-output {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 0.4em;
-        }
-
-        #tfl-output div:nth-child(n+9) {
-            grid-column: 1 / 3;
+            gap: 5px;
         }
 
         .line-status {
-            margin: 0.4em 0;
-            font-size: 1em;
+            margin: 2px 0;
+            font-size: 0.9em;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 0.4em;
+            border-radius: 4px;
+            overflow: hidden;
+            text-align: center;
+            padding: 4px 6px;
         }
 
         .line-name {
             font-weight: bold;
-            flex: 2;
+            flex: 1;
+            color: black;
+            padding: 4px 6px;
+            text-align: center;
         }
 
         .status-text {
-            flex: 1;
-            text-align: right;
-            font-size: 0.9em;
+            flex: 2;
+            text-align: center;
+            font-size: 0.85em;
+            color: black;
         }
 
         .status-good {
@@ -109,20 +111,37 @@
             color: red;
         }
 
+        /* TfL Line Colors */
+        .bakerloo { background-color: #894E24; color: white; }
+        .central { background-color: #E30613; color: white; }
+        .circle { background-color: #FFCD00; color: black; }
+        .district { background-color: #007229; color: white; }
+        .elizabeth { background-color: #952672; color: white; }
+        .hammersmith-city { background-color: #F3A6C1; color: black; }
+        .jubilee { background-color: #A1A5A7; color: black; }
+        .metropolitan { background-color: #9B0056; color: white; }
+        .northern { background-color: black; color: white; }
+        .piccadilly { background-color: #003688; color: white; }
+        .victoria { background-color: #0098DF; color: white; }
+        .waterloo-city { background-color: #76D0A6; color: black; }
+        .dlr-color { background-color: #00A4A7; color: white; }
+        .overground-color { background-color: #E86A10; color: white; }
+        .tram-color { background-color: #008114; color: white; }
+
         .video-wrapper {
             flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 600px;
+            height: 400px;
         }
 
         .video-frame {
             border: none;
             border-radius: 8px;
-            height: 600px;
+            height: 400px;
             width: 100%;
-            max-width: 800px;
+            max-width: 600px;
         }
 
         /* Adjustments for smaller screens */
@@ -163,7 +182,7 @@
             }
 
             .status-text {
-                font-size: 0.8em;
+                font-size: 1.4em;
             }
 
             #tfl-output {
@@ -192,8 +211,7 @@
         </div>
         <div class="video-wrapper">
             <iframe class="video-frame"
-                src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA&disable_player_ui=true&hide_side_panel=true"
-                title="VidGrid Multi-View"></iframe>
+                <div class="video-wrapper"> <iframe class="video-frame" src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA&disable_player_ui=true&hide_side_panel=true" title="VidGrid Multi-View"></iframe>
         </div>
     </div>
 
@@ -202,33 +220,36 @@
             const output = document.getElementById('tfl-output');
             try {
                 const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
+                if (!res.ok) {
+                    throw new Error(`HTTP error! Status: ${res.status}`);
+                }
                 const data = await res.json();
 
                 output.innerHTML = '';
                 const lines = [
-                    "Bakerloo",
-                    "Central",
-                    "Circle",
-                    "District",
-                    "Elizabeth",
-                    "Hammersmith & City",
-                    "Jubilee",
-                    "Metropolitan",
-                    "Northern",
-                    "Piccadilly",
-                    "Victoria",
-                    "Waterloo & City",
-                    "DLR",
-                    "Overground",
-                    "Tram"
+                    { name: "Bakerloo", cssClass: "bakerloo" },
+                    { name: "Central", cssClass: "central" },
+                    { name: "Circle", cssClass: "circle" },
+                    { name: "District", cssClass: "district" },
+                    { name: "Elizabeth", cssClass: "elizabeth" },
+                    { name: "Hammersmith & City", cssClass: "hammersmith-city" },
+                    { name: "Jubilee", cssClass: "jubilee" },
+                    { name: "Metropolitan", cssClass: "metropolitan" },
+                    { name: "Northern", cssClass: "northern" },
+                    { name: "Piccadilly", cssClass: "piccadilly" },
+                    { name: "Victoria", cssClass: "victoria" },
+                    { name: "Waterloo & City", cssClass: "waterloo-city" },
+                    { name: "DLR", cssClass: "dlr-color" },
+                    { name: "Overground", cssClass: "overground-color" },
+                    { name: "Tram", cssClass: "tram-color" }
                 ];
 
-                let column = 1; // Start with the first column
+                let column = 1;
 
-                lines.forEach(lineName => {
-                    const line = data.find(l => l.name && l.name.toLowerCase() === lineName.toLowerCase());
-                    if (line && line.lineStatuses && Array.isArray(line.lineStatuses) && line.lineStatuses.length > 0) {
-                        const status = line.lineStatuses[0];
+                lines.forEach(line => {
+                    const apiLine = data.find(l => l.name && l.name.toLowerCase() === line.name.toLowerCase());
+                    if (apiLine && apiLine.lineStatuses && Array.isArray(apiLine.lineStatuses) && apiLine.lineStatuses.length > 0) {
+                        const status = apiLine.lineStatuses[0];
                         const statusClass =
                             status.statusSeverityDescription && status.statusSeverityDescription.includes('Good') ? 'status-good' :
                             status.statusSeverityDescription && status.statusSeverityDescription.includes('Minor') ? 'status-minor' : 'status-severe';
@@ -242,18 +263,18 @@
                         const gridColumn = column % 2 === 0 ? 2 : 1;
                         output.innerHTML += `
                   <div class="line-status" style="grid-column: ${gridColumn};">
-                    <span class="line-name">${line.name || lineName}:</span>
-                    <span class="status-text ${statusClass}">${statusText}</span>
+                    <div class="line-name ${line.cssClass}">${line.name}:</div>
+                    <div class="status-text ${statusClass}">${statusText}</div>
                   </div>`;
                     } else {
-                        console.warn(`Line not found in API response: ${lineName}`);
+                        console.warn(`Line not found in API response: ${line.name}`);
                         output.innerHTML += `
                   <div class="line-status" style="grid-column: ${column % 2 === 0 ? 2 : 1};">
-                    <span class="line-name">${lineName}:</span>
-                    <span class="status-text status-good">Good Service</span>
+                    <div class="line-name ${line.cssClass}">${line.name}:</div>
+                    <div class="status-text status-good">Good Service</div>
                   </div>`;
                     }
-                    column++; // Increment column counter
+                    column++;
                 });
             } catch (err) {
                 output.innerHTML = 'Error fetching TfL status.';
