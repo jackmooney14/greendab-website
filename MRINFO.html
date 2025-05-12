@@ -47,7 +47,7 @@
     .status-section {
       display: flex;
       flex-direction: column;
-      gap: 0;
+      gap: 0; /* Removed gap between cards */
       flex: 1;
     }
 
@@ -58,6 +58,7 @@
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       flex: 1;
       min-width: 0;
+      margin-bottom: 0; /* Removed margin below the card */
     }
 
     .card h2 {
@@ -70,15 +71,15 @@
     #tfl-output {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 5px;
+      gap: 2px; /* Reduced gap within the TfL grid */
     }
 
     .line-status {
-      margin: 2px 0;
+      margin: 0; /* Removed margin around each line status */
       font-size: 0.9em;
       display: flex;
       align-items: center;
-      border-radius: 4px;
+      border-radius: 0; /* Removed border radius for a more connected look */
       overflow: hidden;
       text-align: center;
       padding: 4px 6px;
