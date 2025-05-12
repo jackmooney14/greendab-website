@@ -1,168 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video and Weather</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f4;
-            overflow: hidden;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Video and Weather</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      height: 100vh;
+      margin: 0;
+      background-color: #000; /* Black background */
+      color: white; /* White text */
+      overflow: hidden;
+    }
 
-        #main-container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 1920px; /* 1080p screen width */
-            height: 100vh;
-        }
+    #main-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1920px;
+      height: 100vh;
+    }
 
-        #weather-container {
-            width: 40%; /* Reduce the width of the weather container */
-            background-color: #fff;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
-            font-size: 0.8em; /* Reduced text size for weather section */
-            max-height: 100%;
-            box-sizing: border-box;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Create two columns */
-            gap: 20px; /* Space between the columns */
-        }
+    #weather-container {
+      width: 40%;
+      padding: 20px;
+      overflow-y: auto;
+      font-size: 0.8em;
+      max-height: 100%;
+      box-sizing: border-box;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
 
-        .location {
-            margin-top: 10px;
-        }
+    .location {
+      margin-top: 10px;
+    }
 
-        .weather-info {
-            margin-top: 5px;
-        }
+    .weather-info {
+      margin-top: 5px;
+    }
 
-        .location-name {
-            font-weight: bold;
-        }
+    .location-name {
+      font-weight: bold;
+    }
 
-        #video-container {
-            width: 55%; /* Enlarge the video container */
-            background-color: #fff;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            height: 100%;
-        }
+    #video-container {
+      width: 55%;
+      padding: 20px;
+      height: 100%;
+      box-sizing: border-box;
+    }
 
-        iframe {
-            width: 100%;
-            height: 80%;
-        }
+    iframe {
+      width: 100%;
+      height: 80%;
+      border: none;
+    }
 
-        @media screen and (max-width: 1080px) {
-            #main-container {
-                flex-direction: column;
-            }
+    @media screen and (max-width: 1080px) {
+      #main-container {
+        flex-direction: column;
+      }
 
-            #weather-container, #video-container {
-                width: 100%;
-                margin-bottom: 20px;
-            }
+      #weather-container,
+      #video-container {
+        width: 100%;
+        margin-bottom: 20px;
+      }
 
-            iframe {
-                height: 450px; /* Adjust video size for smaller screens */
-            }
+      iframe {
+        height: 450px;
+      }
 
-            /* Adjust grid layout for smaller screens */
-            #weather-container {
-                grid-template-columns: 1fr; /* Stack weather info in one column */
-            }
-        }
-    </style>
+      #weather-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
 
-    <div id="main-container">
-        <!-- Weather data on the left -->
-        <div id="weather-container">
-            <h2>Weather Update</h2>
-            <div id="weather-bulletin">
-                <p>Current weather in the areas surrounding Greenwich:</p>
-            </div>
+  <div id="main-container">
+    <!-- Weather Section -->
+    <div id="weather-container">
+      <h2>Weather Update</h2>
+      <div id="weather-bulletin">
+        <p>Current weather in the areas surrounding Greenwich:</p>
+      </div>
 
-            <div id="weather-locations">
-                <!-- Dynamic weather info will be displayed here in two columns -->
-            </div>
-        </div>
-
-        <!-- Video box on the right -->
-        <div id="video-container">
-            <iframe src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
-                frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
-        </div>
+      <div id="weather-locations">
+        <!-- Weather info loads here -->
+      </div>
     </div>
 
-    <script>
-        const apiKey = 'c43b3437c0f093ed56bdc93a115e26a2'; // Your OpenWeatherMap API key
-        const locations = [
-            { name: 'Abbey Wood', coordinates: { lat: 51.4933, lon: 0.1042 } },
-            { name: 'Bexleyheath', coordinates: { lat: 51.4563, lon: 0.1484 } },
-            { name: 'Charlton', coordinates: { lat: 51.4876, lon: 0.0167 } },
-            { name: 'Dartford', coordinates: { lat: 51.4432, lon: 0.2201 } },
-            { name: 'Eltham', coordinates: { lat: 51.4479, lon: 0.0602 } },
-            { name: 'Greenwich', coordinates: { lat: 51.4769, lon: -0.0005 } },
-            { name: 'Welling', coordinates: { lat: 51.4655, lon: 0.0875 } },
-            { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
-        ];
+    <!-- Video Section -->
+    <div id="video-container">
+      <iframe src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
+        allowfullscreen></iframe>
+    </div>
+  </div>
 
-        // Sort locations alphabetically
-        locations.sort((a, b) => a.name.localeCompare(b.name));
+  <script>
+    const apiKey = 'c43b3437c0f093ed56bdc93a115e26a2';
+    const locations = [
+      { name: 'Abbey Wood', coordinates: { lat: 51.4933, lon: 0.1042 } },
+      { name: 'Bexleyheath', coordinates: { lat: 51.4563, lon: 0.1484 } },
+      { name: 'Charlton', coordinates: { lat: 51.4876, lon: 0.0167 } },
+      { name: 'Dartford', coordinates: { lat: 51.4432, lon: 0.2201 } },
+      { name: 'Eltham', coordinates: { lat: 51.4479, lon: 0.0602 } },
+      { name: 'Greenwich', coordinates: { lat: 51.4769, lon: -0.0005 } },
+      { name: 'Welling', coordinates: { lat: 51.4655, lon: 0.0875 } },
+      { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
+    ];
 
-        // Function to fetch weather for a location
-        function getWeatherData(location) {
-            const { lat, lon } = location.coordinates;
-            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+    // Sort alphabetically
+    locations.sort((a, b) => a.name.localeCompare(b.name));
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    displayWeather(location.name, data);
-                })
-                .catch(error => console.error('Error fetching weather data:', error));
-        }
+    function getWeatherData(location) {
+      const { lat, lon } = location.coordinates;
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
-        // Function to display weather data on the page
-        function displayWeather(locationName, data) {
-            const weatherContainer = document.getElementById('weather-locations');
-            const locationElement = document.createElement('div');
-            locationElement.classList.add('location');
-            
-            locationElement.innerHTML = `
-                <div class="location-name">${locationName}</div>
-                <div class="weather-info">Temperature: ${data.main.temp}°C</div>
-                <div class="weather-info">Weather: ${data.weather[0].description}</div>
-            `;
-            
-            weatherContainer.appendChild(locationElement);
-        }
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          displayWeather(location.name, data);
+        })
+        .catch(error => console.error('Error fetching weather data:', error));
+    }
 
-        // Loop through sorted locations and get weather data for each
-        locations.forEach(location => {
-            getWeatherData(location);
-        });
+    function displayWeather(locationName, data) {
+      const weatherContainer = document.getElementById('weather-locations');
+      const locationElement = document.createElement('div');
+      locationElement.classList.add('location');
 
-        // Optionally, you can refresh weather data periodically, e.g., every 10 minutes
-        setInterval(() => {
-            document.getElementById('weather-locations').innerHTML = ''; // Clear existing data
-            locations.forEach(location => {
-                getWeatherData(location);
-            });
-        }, 600000); // 10 minutes in milliseconds
-    </script>
+      locationElement.innerHTML = `
+        <div class="location-name">${locationName}</div>
+        <div class="weather-info">Temperature: <strong>${data.main.temp}°C</strong></div>
+        <div class="weather-info">Weather: ${data.weather[0].description}</div>
+      `;
+
+      weatherContainer.appendChild(locationElement);
+    }
+
+    locations.forEach(location => {
+      getWeatherData(location);
+    });
+
+    // Refresh every 10 minutes
+    setInterval(() => {
+      document.getElementById('weather-locations').innerHTML = '';
+      locations.forEach(location => {
+        getWeatherData(location);
+      });
+    }, 600000);
+  </script>
+
 </body>
 </html>
