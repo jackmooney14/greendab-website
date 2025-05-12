@@ -7,8 +7,7 @@
     <title>Transport Dashboard</title>
     <style>
         body {
-            font-family: Arial,
-            sans-serif;
+            font-family: Arial, sans-serif;
             background: #f4f4f4;
             margin: 0;
             padding: 10px;
@@ -71,6 +70,10 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 0.4em;
+        }
+
+        #tfl-output div:nth-child(n+9) {
+            grid-column: 1 / 3;
         }
 
         .line-status {
@@ -198,7 +201,7 @@
         async function fetchTfLStatus() {
             const output = document.getElementById('tfl-output');
             try {
-                const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram,river-boat,woolwich-ferry/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
+                const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
                 const data = await res.json();
 
                 output.innerHTML = '';
@@ -217,40 +220,44 @@
                     "Waterloo & City",
                     "DLR",
                     "Overground",
-                    "Tram",
-                    "River Bus",
-                    "Woolwich Ferry"
+                    "Tram"
                 ];
 
+                let column = 1; // Start with the first column
+
                 lines.forEach(lineName => {
-                    const line = data.find(l => l.name === lineName || (l.modeName === "River Bus" && lineName === "River Bus") || (l.modeName === "Woolwich Ferry" && lineName === "Woolwich Ferry"));
+                    const line = data.find(l => l.name && l.name.toLowerCase() === lineName.toLowerCase());
                     if (line && line.lineStatuses && Array.isArray(line.lineStatuses) && line.lineStatuses.length > 0) {
                         const status = line.lineStatuses[0];
                         const statusClass =
-                            status.statusSeverityDescription.includes('Good') ? 'status-good' :
-                            status.statusSeverityDescription.includes('Minor') ? 'status-minor' : 'status-severe';
+                            status.statusSeverityDescription && status.statusSeverityDescription.includes('Good') ? 'status-good' :
+                            status.statusSeverityDescription && status.statusSeverityDescription.includes('Minor') ? 'status-minor' : 'status-severe';
 
-                        let statusText = status.statusSeverityDescription;
-                        if (status.statusSeverityDescription === "Good Service") {
+                        let statusText = status.statusSeverityDescription || "Unknown";
+                        if (statusText === "Good Service") {
                             statusText = "Good Service";
                         }
 
+                        // Determine grid column based on even/odd index
+                        const gridColumn = column % 2 === 0 ? 2 : 1;
                         output.innerHTML += `
-                  <div class="line-status">
-                    <span class="line-name">${line.name}:</span>
+                  <div class="line-status" style="grid-column: ${gridColumn};">
+                    <span class="line-name">${line.name || lineName}:</span>
                     <span class="status-text ${statusClass}">${statusText}</span>
                   </div>`;
                     } else {
+                        console.warn(`Line not found in API response: ${lineName}`);
                         output.innerHTML += `
-                  <div class="line-status">
+                  <div class="line-status" style="grid-column: ${column % 2 === 0 ? 2 : 1};">
                     <span class="line-name">${lineName}:</span>
                     <span class="status-text status-good">Good Service</span>
                   </div>`;
                     }
+                    column++; // Increment column counter
                 });
             } catch (err) {
                 output.innerHTML = 'Error fetching TfL status.';
-                console.error(err);
+                console.error('Fetch error:', err);
             }
         }
 
