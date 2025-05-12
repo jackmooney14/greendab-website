@@ -106,7 +106,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 600px; /* Match iframe height */
+            height: 600px;
         }
 
         .video-frame {
@@ -123,9 +123,13 @@
                 flex-direction: column;
             }
 
+            .info-section {
+                order: 2; /* Move info section below video on smaller screens */
+            }
+
             .video-wrapper {
-                order: -1;
-                height: auto; /* Allow height to adjust */
+                order: 1; /* Move video wrapper to top on smaller screens */
+                height: auto;
             }
 
             .video-frame {
@@ -210,8 +214,8 @@
                 ];
 
                 lines.forEach(lineName => {
-                    const line = data.find(l => l.name === lineName);
-                    if (line) {
+                    const line = data.find(l => l.name === lineName || (l.modeName === "River Bus" && lineName === "River Bus") || (l.modeName === "Woolwich Ferry" && lineName === "Woolwich Ferry"));
+                    if (line && line.lineStatuses && line.lineStatuses.length > 0) {
                         const status = line.lineStatuses[0];
                         const statusClass =
                             status.statusSeverityDescription.includes('Good') ? 'status-good' :
