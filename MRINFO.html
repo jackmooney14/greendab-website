@@ -11,7 +11,7 @@
             sans-serif;
             background: #f4f4f4;
             margin: 0;
-            padding: 10px;
+            padding: 5px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -20,82 +20,82 @@
         h1 {
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             font-size: 2em;
         }
 
         h1 img {
-            max-height: 80px;
-            margin-right: 20px;
+            max-height: 60px;
+            margin-right: 10px;
         }
 
         .container {
             display: flex;
             flex-direction: row;
-            gap: 10px;
+            gap: 5px;
             width: 100%;
-            max-width: 1200px;
+            max-width: 1000px;
         }
 
         .info-section {
             display: flex;
             flex-direction: row;
-            gap: 10px;
+            gap: 5px;
             flex: 1;
         }
 
         .status-section {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 5px;
             flex: 1;
         }
 
         .card {
             background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 8px;
+            border-radius: 6px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
             flex: 1;
             min-width: 0;
         }
 
         .card h2 {
             margin-top: 0;
-            font-size: 1.4em;
-            margin-bottom: 8px;
+            font-size: 1.1em;
+            margin-bottom: 5px;
             text-align: center;
         }
 
         #tfl-output {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 5px;
+            gap: 3px;
         }
 
         .line-status {
-            margin: 2px 0;
+            margin: 1px 0;
             font-size: 0.9em;
             display: flex;
             align-items: center;
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
             text-align: center;
-            padding: 4px 6px;
+            padding: 3px 4px;
         }
 
         .line-name {
             font-weight: bold;
             flex: 1;
             color: black;
-            padding: 4px 6px;
+            padding: 2px 3px;
             text-align: center;
         }
 
         .status-text {
             flex: 2;
             text-align: center;
-            font-size: 0.85em;
+            font-size: 1em; /* Increased status text size */
             color: black;
         }
 
@@ -133,15 +133,15 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 400px;
+            height: 300px;
         }
 
         .video-frame {
             border: none;
-            border-radius: 8px;
-            height: 400px;
+            border-radius: 6px;
+            height: 300px;
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
         }
 
         /* Adjustments for smaller screens */
@@ -160,33 +160,29 @@
             }
 
             .video-frame {
-                height: 400px;
+                height: 300px;
             }
         }
 
         @media (max-width: 768px) {
             h1 {
-                font-size: 1.5em;
-            }
-
-            h1 img {
-                max-height: 50px;
-            }
-
-            .card h2 {
                 font-size: 1.2em;
             }
 
+            h1 img {
+                max-height: 40px;
+            }
+
+            .card h2 {
+                font-size: 1em;
+            }
+
             .line-status {
-                font-size: 0.9em;
+                font-size: 0.75em;
             }
 
             .status-text {
-                font-size: 1.4em;
-            }
-
-            #tfl-output {
-                grid-template-columns: 1fr;
+                font-size: 0.9em; /* Increased status text size */
             }
         }
     </style>
@@ -211,7 +207,8 @@
         </div>
         <div class="video-wrapper">
             <iframe class="video-frame"
-                <div class="video-wrapper"> <iframe class="video-frame" src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA&disable_player_ui=true&hide_side_panel=true" title="VidGrid Multi-View"></iframe>
+                src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw2N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA&disable_player_ui=true&hide_side_panel=true"
+                title="VidGrid Multi-View"></iframe>
         </div>
     </div>
 
