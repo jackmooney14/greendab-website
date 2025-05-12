@@ -8,7 +8,8 @@
     <title>Transport Dashboard</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial,
+            sans-serif;
             background: #f4f4f4;
             margin: 0;
             padding: 20px;
@@ -20,6 +21,7 @@
         h1 {
             display: flex;
             align-items: center;
+            margin-bottom: 20px;
         }
 
         h1 img {
@@ -57,10 +59,21 @@
         .line-status {
             margin: 0.4em 0;
             font-size: 0.95em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.4em;
         }
 
         .line-name {
             font-weight: bold;
+            flex: 1;
+        }
+
+        .status-text {
+            flex: 1;
+            text-align: right;
         }
 
         .status-good {
@@ -103,7 +116,7 @@
     <div class="container">
         <div class="status-section">
             <div class="card" id="tfl-status">
-                <h2>🚇 TfL Line Status</h2>
+                <h2>🚇 TfL Status</h2>
                 <div id="tfl-output">Loading...</div>
             </div>
             <div class="card" id="national-rail-status">
@@ -120,21 +133,50 @@
         async function fetchTfLStatus() {
             const output = document.getElementById('tfl-output');
             try {
-                const res = await fetch("https://api.tfl.gov.uk/line/mode/tube/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
+                const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
                 const data = await res.json();
 
                 output.innerHTML = '';
-                data.forEach(line => {
-                    const status = line.lineStatuses[0];
-                    const statusClass =
-                        status.statusSeverityDescription.includes('Good') ? 'status-good' :
-                        status.statusSeverityDescription.includes('Minor') ? 'status-minor' : 'status-severe';
+                const lines = [
+                    "Bakerloo",
+                    "Central",
+                    "Circle",
+                    "District",
+                    "Elizabeth",
+                    "Hammersmith & City",
+                    "Jubilee",
+                    "Metropolitan",
+                    "Northern",
+                    "Piccadilly",
+                    "Victoria",
+                    "Waterloo & City",
+                    "DLR",
+                    "Overground",
+                    "Tram",
+                    "River Bus",
+                    "Woolwich Ferry"
+                ];
 
-                    output.innerHTML += `
-              <div class="line-status">
-                <span class="line-name">${line.name}:</span>
-                <span class="${statusClass}">${status.statusSeverityDescription}</span>
-              </div>`;
+                lines.forEach(lineName => {
+                    const line = data.find(l => l.name === lineName);
+                    if (line) {
+                        const status = line.lineStatuses[0];
+                        const statusClass =
+                            status.statusSeverityDescription.includes('Good') ? 'status-good' :
+                            status.statusSeverityDescription.includes('Minor') ? 'status-minor' : 'status-severe';
+
+                        output.innerHTML += `
+                  <div class="line-status">
+                    <span class="line-name">${line.name}:</span>
+                    <span class="status-text ${statusClass}">${status.statusSeverityDescription}</span>
+                  </div>`;
+                    } else {
+                        output.innerHTML += `
+                  <div class="line-status">
+                    <span class="line-name">${lineName}:</span>
+                    <span class="status-text status-good">Good Service</span>
+                  </div>`;
+                    }
                 });
             } catch (err) {
                 output.innerHTML = 'Error fetching TfL status.';
@@ -145,22 +187,30 @@
         async function fetchNationalRailStatus() {
             const output = document.getElementById('nr-output');
             const mockData = [
-                { route: 'Southeastern: London Cannon Street - Dartford', status: 'On time' },
-                { route: 'Southeastern: London Victoria - Orpington', status: 'Delayed' },
+                { route: 'Southeastern: London Blackfriars - Sevenoaks', status: 'On time' },
+                { route: 'Southeastern: London Charing Cross - Hastings', status: 'Good service' },
+                { route: 'Southeastern: London Cannon Street - Dover Priory', status: 'Minor delays' },
+                { route: 'Southeastern: London Victoria - Ramsgate', status: 'Partially suspended' },
+                { route: 'Southeastern: High Speed 1', status: 'Service closed' },
                 { route: 'Thameslink: Bedford - Brighton', status: 'On time' },
-                { route: 'Thameslink: Luton - Sutton', status: 'Cancelled' }
+                { route: 'Thameslink: Luton - Sutton', status: 'Cancelled' },
+                { route: 'Thameslink: Rainham - Horsham', status: 'Delayed' },
+                { route: 'Thameslink: Sevenoaks - Cambridge', status: 'On time' },
+                { route: 'Thameslink: Peterborough - Horsham', status: 'Good service' },
+                { route: 'Thameslink: Brighton - Cambridge', status: 'Minor delays' },
+                { route: 'Thameslink: Littlehampton - Bedford', status: 'Severe delays' }
             ];
 
             output.innerHTML = '';
             mockData.forEach(service => {
                 const statusClass =
-                    service.status.includes('On time') ? 'status-good' :
-                    service.status.includes('Delayed') ? 'status-minor' : 'status-severe';
+                    service.status.includes('On time') || service.status.includes('Good service') ? 'status-good' :
+                    service.status.includes('Delayed') || service.status.includes('Minor delays') ? 'status-minor' : 'status-severe';
 
                 output.innerHTML += `
               <div class="line-status">
                 <span class="line-name">${service.route}:</span>
-                <span class="${statusClass}">${service.status}</span>
+                <span class="status-text ${statusClass}">${service.status}</span>
               </div>`;
             });
         }
