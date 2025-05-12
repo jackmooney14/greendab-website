@@ -32,17 +32,24 @@
 
         .container {
             display: flex;
-            flex-direction: row; /* Keep as row */
+            flex-direction: row;
             gap: 15px;
             width: 100%;
             max-width: 1200px;
         }
 
-        .status-section {
+        .info-section {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
             flex: 1;
+        }
+
+        .status-section {
             display: flex;
             flex-direction: column;
             gap: 15px;
+            flex: 1;
         }
 
         .card {
@@ -99,28 +106,30 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 600px; /* Match iframe height */
         }
 
         .video-frame {
             border: none;
             border-radius: 8px;
-            height: 600px; /* Adjust as needed */
+            height: 600px;
             width: 100%;
-            max-width: 800px; /* Limit width if necessary */
+            max-width: 800px;
         }
 
         /* Adjustments for smaller screens */
         @media (max-width: 1024px) {
             .container {
-                flex-direction: column; /* Stack vertically on smaller screens */
+                flex-direction: column;
             }
 
             .video-wrapper {
-                order: -1; /* Move video to top on smaller screens */
+                order: -1;
+                height: auto; /* Allow height to adjust */
             }
 
             .video-frame {
-                height: 400px; /* Adjust height for smaller screens */
+                height: 400px;
             }
         }
 
@@ -153,19 +162,21 @@
     <h1><img src="maritime Online Logo.png" alt="Maritime Online Logo">Transport Dashboard</h1>
 
     <div class="container">
-        <div class="status-section">
-            <div class="card" id="tfl-status">
-                <h2>🚇 TfL Status</h2>
-                <div id="tfl-output">Loading...</div>
-            </div>
-            <div class="card" id="national-rail-status">
-                <h2>🚆 Local National Rail Status</h2>
-                <div id="nr-output">Loading...</div>
+        <div class="info-section">
+            <div class="status-section">
+                <div class="card" id="tfl-status">
+                    <h2>🚇 TfL Status</h2>
+                    <div id="tfl-output">Loading...</div>
+                </div>
+                <div class="card" id="national-rail-status">
+                    <h2>🚆 Local National Rail Status</h2>
+                    <div id="nr-output">Loading...</div>
+                </div>
             </div>
         </div>
         <div class="video-wrapper">
             <iframe class="video-frame"
-                src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
+                src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA&disable_player_ui=true&hide_side_panel=true"
                 title="VidGrid Multi-View"></iframe>
         </div>
     </div>
@@ -174,7 +185,7 @@
         async function fetchTfLStatus() {
             const output = document.getElementById('tfl-output');
             try {
-                const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
+                const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram,river-boat,woolwich-ferry/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
                 const data = await res.json();
 
                 output.innerHTML = '';
@@ -193,7 +204,9 @@
                     "Waterloo & City",
                     "DLR",
                     "Overground",
-                    "Tram"
+                    "Tram",
+                    "River Bus",
+                    "Woolwich Ferry"
                 ];
 
                 lines.forEach(lineName => {
