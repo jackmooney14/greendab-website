@@ -12,7 +12,7 @@
             sans-serif;
             background: #f4f4f4;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -21,52 +21,55 @@
         h1 {
             display: flex;
             align-items: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-size: 2em;
         }
 
         h1 img {
-            max-height: 120px;
-            margin-right: 25px;
+            max-height: 80px;
+            margin-right: 20px;
         }
 
         .container {
             display: flex;
-            flex-direction: row;
-            gap: 30px;
+            flex-direction: column;
+            gap: 15px;
             width: 100%;
-            max-width: 1600px;
+            max-width: 1200px;
         }
 
         .status-section {
-            flex: 1;
             display: flex;
-            flex-direction: column;
-            gap: 30px;
+            flex-direction: row;
+            gap: 15px;
+            width: 100%;
+            justify-content: space-between;
         }
 
         .card {
             background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 0;
         }
 
         .card h2 {
             margin-top: 0;
-            font-size: 1.8em;
-            margin-bottom: 15px;
+            font-size: 1.4em;
+            margin-bottom: 10px;
             text-align: center;
         }
 
         .line-status {
-            margin: 0.6em 0;
-            font-size: 1.2em;
+            margin: 0.4em 0;
+            font-size: 1em;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 0.6em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.4em;
         }
 
         .line-name {
@@ -77,7 +80,7 @@
         .status-text {
             flex: 1;
             text-align: right;
-            font-size: 1.1em;
+            font-size: 0.9em;
         }
 
         .status-good {
@@ -93,43 +96,36 @@
         }
 
         .video-frame {
-            flex: 1;
             border: none;
-            border-radius: 15px;
-            height: 800px;
+            border-radius: 8px;
+            height: 400px;
             width: 100%;
         }
 
         /* Adjustments for smaller screens */
-        @media (max-width: 1024px) {
-            .container {
-                flex-direction: column;
-            }
-
-            .video-frame {
-                height: 500px;
-            }
-        }
-
         @media (max-width: 768px) {
             h1 {
-                font-size: 2em;
+                font-size: 1.5em;
             }
 
             h1 img {
-                max-height: 60px;
+                max-height: 50px;
             }
 
             .card h2 {
-                font-size: 1.4em;
+                font-size: 1.2em;
             }
 
             .line-status {
-                font-size: 1em;
+                font-size: 0.9em;
             }
 
             .status-text {
-                font-size: 0.9em;
+                font-size: 0.8em;
+            }
+
+            .status-section {
+                flex-direction: column;
             }
         }
     </style>
@@ -142,7 +138,7 @@
     <div class="container">
         <div class="status-section">
             <div class="card" id="tfl-status">
-                <h2>🚇 TfL Line Status</h2>
+                <h2>🚇 TfL Status</h2>
                 <div id="tfl-output">Loading...</div>
             </div>
             <div class="card" id="on-the-river-status">
@@ -150,7 +146,7 @@
                 <div id="river-output">Loading...</div>
             </div>
             <div class="card" id="national-rail-status">
-                <h2>🚆 Southeastern & Thameslink Status</h2>
+                <h2>🚆 Southeastern Status</h2>
                 <div id="nr-output">Loading...</div>
             </div>
         </div>
@@ -220,7 +216,7 @@
 
                 output.innerHTML = '';
                 const lines = [
-                    "River Bus",
+                    "RB1",
                     "Woolwich Ferry"
                 ];
 
@@ -253,33 +249,42 @@
 
         async function fetchNationalRailStatus() {
             const output = document.getElementById('nr-output');
+            //const mockData = [
+            //    { route: 'Southeastern: London Blackfriars - Sevenoaks', status: 'On time' },
+            //    { route: 'Southeastern: London Charing Cross - Hastings', status: 'Good service' },
+            //    { route: 'Southeastern: London Cannon Street - Dover Priory', status: 'Minor delays' },
+            //    { route: 'Southeastern: London Victoria - Ramsgate', status: 'Partially suspended' },
+            //    { route: 'Southeastern: High Speed 1', status: 'Service closed' },
+            //    { route: 'Southeastern: London Bridge - Greenwich', status: 'Good service' },
+            //    { route: 'Southeastern: London Bridge - Dartford', status: 'On time' },
+            //    { route: 'Southeastern: London Bridge - Hayes', status: 'Delayed' },
+            //    { route: 'Southeastern: London Bridge - Tonbridge', status: 'Minor delays' },
+            //    { route: 'Southeastern: London Bridge - Sevenoaks', status: 'Good service' },
+            //    { route: 'Southeastern: London Bridge - Gillingham', status: 'On time' },
+            //    { route: 'Southeastern: London Bridge - Ashford International', status: 'Severe delays' },
+            //    { route: 'Southeastern: London Bridge - Canterbury West', status: 'Partially suspended' },
+            //    { route: 'Thameslink: Bedford - Brighton', status: 'On time' },
+            //    { route: 'Thameslink: Luton - Sutton', status: 'Cancelled' },
+            //    { route: 'Thameslink: Rainham - Horsham', status: 'Delayed' },
+            //    { route: 'Thameslink: Sevenoaks - Cambridge', status: 'On time' },
+            //    { route: 'Thameslink: Peterborough - Horsham', status: 'Good service' },
+            //    { route: 'Thameslink: Brighton - Cambridge', status: 'Minor delays' },
+            //    { route: 'Thameslink: Littlehampton - Bedford', status: 'Severe delays' }
+            //];
+
             const mockData = [
-                { route: 'Southeastern: London Blackfriars - Sevenoaks', status: 'On time' },
-                { route: 'Southeastern: London Charing Cross - Hastings', status: 'Good service' },
-                { route: 'Southeastern: London Cannon Street - Dover Priory', status: 'Minor delays' },
-                { route: 'Southeastern: London Victoria - Ramsgate', status: 'Partially suspended' },
-                { route: 'Southeastern: High Speed 1', status: 'Service closed' },
-                { route: 'Southeastern: London Bridge - Greenwich', status: 'Good service' },
-                { route: 'Southeastern: London Bridge - Dartford', status: 'On time' },
-                { route: 'Southeastern: London Bridge - Hayes', status: 'Delayed' },
-                { route: 'Southeastern: London Bridge - Tonbridge', status: 'Minor delays' },
-                { route: 'Southeastern: London Bridge - Sevenoaks', status: 'Good service' },
-                { route: 'Southeastern: London Bridge - Gillingham', status: 'On time' },
-                { route: 'Southeastern: London Bridge - Ashford International', status: 'Severe delays' },
-                { route: 'Southeastern: London Bridge - Canterbury West', status: 'Partially suspended' },
-                { route: 'Thameslink: Bedford - Brighton', status: 'On time' },
-                { route: 'Thameslink: Luton - Sutton', status: 'Cancelled' },
-                { route: 'Thameslink: Rainham - Horsham', status: 'Delayed' },
-                { route: 'Thameslink: Sevenoaks - Cambridge', status: 'On time' },
-                { route: 'Thameslink: Peterborough - Horsham', status: 'Good service' },
-                { route: 'Thameslink: Brighton - Cambridge', status: 'Minor delays' },
-                { route: 'Thameslink: Littlehampton - Bedford', status: 'Severe delays' }
+                { route: 'Southeastern: Woolwich Line', status: 'Good Service' },
+                { route: 'Southeastern: Bexleyheath Line', status: 'Good Service' },
+                { route: 'Southeastern: Sidcup Line', status: 'Good Service' },
+                { route: 'Southeastern: Hayes Line', status: 'Good Service' },
+                { route: 'Southeastern: Grove Park Line', status: 'Good Service' },
+                { route: 'Thameslink: Rainham Kent', status: 'Good Service' }
             ];
 
             output.innerHTML = '';
             mockData.forEach(service => {
                 const statusClass =
-                    service.status.includes('On time') || service.status.includes('Good service') ? 'status-good' :
+                    service.status.includes('On time') || service.status.includes('Good Service') ? 'status-good' :
                     service.status.includes('Delayed') || service.status.includes('Minor delays') ? 'status-minor' : 'status-severe';
 
                 output.innerHTML += `
