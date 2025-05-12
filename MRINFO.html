@@ -175,14 +175,15 @@
         .tram-color {
             background-color: #008114;
         }
-        
+
         #national-rail-status h2 {
-    color: black; /* Ensure black text */
-    margin-top: 0;
-    font-size: 1.4em;
-    margin-bottom: 10px;
-    text-align: center;
-}
+            color: black;
+            /* Ensure black text */
+            margin-top: 0;
+            font-size: 1.4em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
 
         .video-wrapper {
             flex: 1;
@@ -264,8 +265,13 @@
                     <div id="nr-output">Loading...</div>
                 </div>
             </div>
-       </div> <div class="video-wrapper"> <iframe class="video-frame" src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA&disable_player_ui=true&hide_side_panel=true" title="VidGrid Multi-View"></iframe> 
-       </div> </div>
+        </div>
+        <div class="video-wrapper">
+            <iframe class="video-frame"
+                src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA&disable_player_ui=true&hide_side_panel=true"
+                title="VidGrid Multi-View"></iframe>
+        </div>
+    </div>
 
     <script>
         async function fetchTfLStatus() {
@@ -314,17 +320,17 @@
                         // Determine grid column based on even/odd index
                         const gridColumn = column % 2 === 0 ? 2 : 1;
                         output.innerHTML += `
-                  <div class="line-status" style="grid-column: ${gridColumn};">
-                    <div class="line-name ${line.cssClass}">${line.name}:</div>
-                    <div class="status-text ${statusClass}">${statusText}</div>
-                  </div>`;
+                    <div class="line-status" style="grid-column: ${gridColumn};">
+                        <div class="line-name ${line.cssClass}">${line.name}:</div>
+                        <div class="status-text ${statusClass}">${statusText}</div>
+                    </div>`;
                     } else {
                         console.warn(`Line not found in API response: ${line.name}`);
                         output.innerHTML += `
-                  <div class="line-status" style="grid-column: ${column % 2 === 0 ? 2 : 1};">
-                    <div class="line-name ${line.cssClass}">${line.name}:</div>
-                    <div class="status-text status-good">Good Service</div>
-                  </div>`;
+                    <div class="line-status" style="grid-column: ${column % 2 === 0 ? 2 : 1};">
+                        <div class="line-name ${line.cssClass}">${line.name}:</div>
+                        <div class="status-text status-good">Good Service</div>
+                    </div>`;
                     }
                     column++;
                 });
@@ -342,7 +348,7 @@
                 { route: 'Southeastern: Sidcup Line', status: 'Good Service' },
                 { route: 'Southeastern: Hayes Line', status: 'Good Service' },
                 { route: 'Southeastern: Grove Park Line', status: 'Good Service' },
-                { route: 'Thameslink: Rainham Kent', status: 'Good Service' }
+                { route: 'Southeastern: Rainham Kent', status: 'Good Service' }
             ];
 
             output.innerHTML = '';
@@ -352,10 +358,10 @@
                     service.status.includes('Delayed') || service.status.includes('Minor delays') ? 'status-minor' : 'status-severe';
 
                 output.innerHTML += `
-              <div class="line-status">
-                <span class="line-name">${service.route}:</span>
-                <span class="status-text ${statusClass}">${service.status}</span>
-              </div>`;
+                <div class="line-status">
+                    <span class="line-name" style="color: black;">${service.route}:</span>
+                    <span class="status-text ${statusClass}">${service.status}</span>
+                </div>`;
             });
         }
 
