@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="120">
+    <title>Transport Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            display: flex;
+            align-items: center;
+        }
+
+        h1 img {
+            max-height: 80px;
+            margin-right: 15px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .status-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+
+        .line-status {
+            margin: 0.4em 0;
+            font-size: 0.95em;
+        }
+
+        .line-name {
+            font-weight: bold;
+        }
+
+        .status-good {
+            color: green;
+        }
+
+        .status-minor {
+            color: orange;
+        }
+
+        .status-severe {
+            color: red;
+        }
+
+        .video-frame {
+            flex: 1;
+            border: none;
+            border-radius: 10px;
+            height: 600px;
+            width: 100%;
+        }
+
+        /* Adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .video-frame {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1><img src="maritime Online Logo.png" alt="Maritime Online Logo">Transport Dashboard</h1>
+
+    <div class="container">
+        <div class="status-section">
+            <div class="card" id="tfl-status">
+                <h2>🚇 TfL Line Status</h2>
+                <div id="tfl-output">Loading...</div>
+            </div>
+            <div class="card" id="national-rail-status">
+                <h2>🚆 Southeastern & Thameslink Status</h2>
+                <div id="nr-output">Loading...</div>
+            </div>
+        </div>
+        <iframe class="video-frame"
+            src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
+            title="VidGrid Multi-View"></iframe>
+    </div>
+
+    <script>
+        async function fetchTfLStatus() {
+            const output = document.getElementById('tfl-output');
+            try {
+                const res = await fetch("https://api.tfl.gov.uk/line/mode/tube/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
+                const data = await res.json();
+
+                output.innerHTML = '';
+                data.forEach(line => {
+                    const status = line.lineStatuses[0];
+                    const statusClass =
+                        status.statusSeverityDescription.includes('Good') ? 'status-good' :
+                        status.statusSeverityDescription.includes('Minor') ? 'status-minor' : 'status-severe';
+
+                    output.innerHTML += `
+              <div class="line-status">
+                <span class="line-name">${line.name}:</span>
+                <span class="${statusClass}">${status.statusSeverityDescription}</span>
+              </div>`;
+                });
+            } catch (err) {
+                output.innerHTML = 'Error fetching TfL status.';
+                console.error(err);
+            }
+        }
+
+        async function fetchNationalRailStatus() {
+            const output = document.getElementById('nr-output');
+            const mockData = [
+                { route: 'Southeastern: London Cannon Street - Dartford', status: 'On time' },
+                { route: 'Southeastern: London Victoria - Orpington', status: 'Delayed' },
+                { route: 'Thameslink: Bedford - Brighton', status: 'On time' },
+                { route: 'Thameslink: Luton - Sutton', status: 'Cancelled' }
+            ];
+
+            output.innerHTML = '';
+            mockData.forEach(service => {
+                const statusClass =
+                    service.status.includes('On time') ? 'status-good' :
+                    service.status.includes('Delayed') ? 'status-minor' : 'status-severe';
+
+                output.innerHTML += `
+              <div class="line-status">
+                <span class="line-name">${service.route}:</span>
+                <span class="${statusClass}">${service.status}</span>
+              </div>`;
+            });
+        }
+
+        fetchTfLStatus();
+        fetchNationalRailStatus();
+    </script>
+</body>
+
+</html>
