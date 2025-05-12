@@ -32,18 +32,17 @@
 
         .container {
             display: flex;
-            flex-direction: column;
+            flex-direction: row; /* Keep as row */
             gap: 15px;
             width: 100%;
             max-width: 1200px;
         }
 
         .status-section {
+            flex: 1;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             gap: 15px;
-            width: 100%;
-            justify-content: space-between;
         }
 
         .card {
@@ -95,14 +94,36 @@
             color: red;
         }
 
+        .video-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .video-frame {
             border: none;
             border-radius: 8px;
-            height: 400px;
+            height: 600px; /* Adjust as needed */
             width: 100%;
+            max-width: 800px; /* Limit width if necessary */
         }
 
         /* Adjustments for smaller screens */
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column; /* Stack vertically on smaller screens */
+            }
+
+            .video-wrapper {
+                order: -1; /* Move video to top on smaller screens */
+            }
+
+            .video-frame {
+                height: 400px; /* Adjust height for smaller screens */
+            }
+        }
+
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.5em;
@@ -123,10 +144,6 @@
             .status-text {
                 font-size: 0.8em;
             }
-
-            .status-section {
-                flex-direction: column;
-            }
         }
     </style>
 </head>
@@ -141,18 +158,16 @@
                 <h2>🚇 TfL Status</h2>
                 <div id="tfl-output">Loading...</div>
             </div>
-            <div class="card" id="on-the-river-status">
-                <h2>🌊 On the River</h2>
-                <div id="river-output">Loading...</div>
-            </div>
             <div class="card" id="national-rail-status">
-                <h2>🚆 Southeastern Status</h2>
+                <h2>🚆 Local National Rail Status</h2>
                 <div id="nr-output">Loading...</div>
             </div>
         </div>
-        <iframe class="video-frame"
-            src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
-            title="VidGrid Multi-View"></iframe>
+        <div class="video-wrapper">
+            <iframe class="video-frame"
+                src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
+                title="VidGrid Multi-View"></iframe>
+        </div>
     </div>
 
     <script>
@@ -208,70 +223,8 @@
             }
         }
 
-        async function fetchRiverBusAndFerryStatus() {
-            const output = document.getElementById('river-output');
-            try {
-                const res = await fetch("https://api.tfl.gov.uk/Line/Mode/river-boat,woolwich-ferry/Status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
-                const data = await res.json();
-
-                output.innerHTML = '';
-                const lines = [
-                    "RB1",
-                    "Woolwich Ferry"
-                ];
-
-                lines.forEach(lineName => {
-                    const line = data.find(l => l.name === lineName);
-                    if (line) {
-                        const status = line.lineStatuses[0];
-                        const statusClass =
-                            status.statusSeverityDescription.includes('Good') ? 'status-good' :
-                            status.statusSeverityDescription.includes('Minor') ? 'status-minor' : 'status-severe';
-
-                        output.innerHTML += `
-                  <div class="line-status">
-                    <span class="line-name">${line.name}:</span>
-                    <span class="status-text ${statusClass}">${status.statusSeverityDescription}</span>
-                  </div>`;
-                    } else {
-                        output.innerHTML += `
-                  <div class="line-status">
-                    <span class="line-name">${lineName}:</span>
-                    <span class="status-text status-good">Good Service</span>
-                  </div>`;
-                    }
-                });
-            } catch (err) {
-                output.innerHTML = 'Error fetching River Services status.';
-                console.error(err);
-            }
-        }
-
         async function fetchNationalRailStatus() {
             const output = document.getElementById('nr-output');
-            //const mockData = [
-            //    { route: 'Southeastern: London Blackfriars - Sevenoaks', status: 'On time' },
-            //    { route: 'Southeastern: London Charing Cross - Hastings', status: 'Good service' },
-            //    { route: 'Southeastern: London Cannon Street - Dover Priory', status: 'Minor delays' },
-            //    { route: 'Southeastern: London Victoria - Ramsgate', status: 'Partially suspended' },
-            //    { route: 'Southeastern: High Speed 1', status: 'Service closed' },
-            //    { route: 'Southeastern: London Bridge - Greenwich', status: 'Good service' },
-            //    { route: 'Southeastern: London Bridge - Dartford', status: 'On time' },
-            //    { route: 'Southeastern: London Bridge - Hayes', status: 'Delayed' },
-            //    { route: 'Southeastern: London Bridge - Tonbridge', status: 'Minor delays' },
-            //    { route: 'Southeastern: London Bridge - Sevenoaks', status: 'Good service' },
-            //    { route: 'Southeastern: London Bridge - Gillingham', status: 'On time' },
-            //    { route: 'Southeastern: London Bridge - Ashford International', status: 'Severe delays' },
-            //    { route: 'Southeastern: London Bridge - Canterbury West', status: 'Partially suspended' },
-            //    { route: 'Thameslink: Bedford - Brighton', status: 'On time' },
-            //    { route: 'Thameslink: Luton - Sutton', status: 'Cancelled' },
-            //    { route: 'Thameslink: Rainham - Horsham', status: 'Delayed' },
-            //    { route: 'Thameslink: Sevenoaks - Cambridge', status: 'On time' },
-            //    { route: 'Thameslink: Peterborough - Horsham', status: 'Good service' },
-            //    { route: 'Thameslink: Brighton - Cambridge', status: 'Minor delays' },
-            //    { route: 'Thameslink: Littlehampton - Bedford', status: 'Severe delays' }
-            //];
-
             const mockData = [
                 { route: 'Southeastern: Woolwich Line', status: 'Good Service' },
                 { route: 'Southeastern: Bexleyheath Line', status: 'Good Service' },
@@ -296,7 +249,6 @@
         }
 
         fetchTfLStatus();
-        fetchRiverBusAndFerryStatus();
         fetchNationalRailStatus();
     </script>
 </body>
