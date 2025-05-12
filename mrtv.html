@@ -85,6 +85,9 @@
             { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
         ];
 
+        // Sort locations alphabetically
+        locations.sort((a, b) => a.name.localeCompare(b.name));
+
         // Function to fetch weather for a location
         function getWeatherData(location) {
             const { lat, lon } = location.coordinates;
@@ -113,7 +116,7 @@
             weatherContainer.appendChild(locationElement);
         }
 
-        // Loop through locations (sorted in chronological order) and get weather data for each
+        // Loop through sorted locations and get weather data for each
         locations.forEach(location => {
             getWeatherData(location);
         });
