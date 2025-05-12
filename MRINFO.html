@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="120">
     <title>Transport Dashboard</title>
     <style>
         body {
@@ -68,6 +67,12 @@
             text-align: center;
         }
 
+        #tfl-output {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.4em;
+        }
+
         .line-status {
             margin: 0.4em 0;
             font-size: 1em;
@@ -124,11 +129,11 @@
             }
 
             .info-section {
-                order: 2; /* Move info section below video on smaller screens */
+                order: 2;
             }
 
             .video-wrapper {
-                order: 1; /* Move video wrapper to top on smaller screens */
+                order: 1;
                 height: auto;
             }
 
@@ -156,6 +161,10 @@
 
             .status-text {
                 font-size: 0.8em;
+            }
+
+            #tfl-output {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -215,16 +224,21 @@
 
                 lines.forEach(lineName => {
                     const line = data.find(l => l.name === lineName || (l.modeName === "River Bus" && lineName === "River Bus") || (l.modeName === "Woolwich Ferry" && lineName === "Woolwich Ferry"));
-                    if (line && line.lineStatuses && line.lineStatuses.length > 0) {
+                    if (line && line.lineStatuses && Array.isArray(line.lineStatuses) && line.lineStatuses.length > 0) {
                         const status = line.lineStatuses[0];
                         const statusClass =
                             status.statusSeverityDescription.includes('Good') ? 'status-good' :
                             status.statusSeverityDescription.includes('Minor') ? 'status-minor' : 'status-severe';
 
+                        let statusText = status.statusSeverityDescription;
+                        if (status.statusSeverityDescription === "Good Service") {
+                            statusText = "Good Service";
+                        }
+
                         output.innerHTML += `
                   <div class="line-status">
                     <span class="line-name">${line.name}:</span>
-                    <span class="status-text ${statusClass}">${status.statusSeverityDescription}</span>
+                    <span class="status-text ${statusClass}">${statusText}</span>
                   </div>`;
                     } else {
                         output.innerHTML += `
