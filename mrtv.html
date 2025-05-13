@@ -13,8 +13,8 @@
       padding: 20px;
       height: 100vh;
       margin: 0;
-      background-color: #000; /* Black background */
-      color: white; /* White text */
+      background-color: #000;
+      color: white;
       overflow: hidden;
     }
 
@@ -23,44 +23,72 @@
       justify-content: space-between;
       width: 100%;
       max-width: 1920px;
-      height: 100vh;
-    }
-
-    #weather-container {
-      width: 40%;
-      padding: 20px;
-      overflow-y: auto;
-      font-size: 0.8em;
-      max-height: 100%;
-      box-sizing: border-box;
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      height: 100%;
       gap: 20px;
     }
 
-    .location {
-      margin-top: 10px;
+    #weather-container {
+      width: 35%;
+      padding: 20px;
+      overflow-y: auto;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      background-color: #111;
+      border-radius: 12px;
+      max-height: 100%;
     }
 
-    .weather-info {
-      margin-top: 5px;
+    #weather-container h2 {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+    }
+
+    #weather-bulletin {
+      margin-bottom: 10px;
+      font-size: 1em;
+    }
+
+    #weather-locations {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .location {
+      background-color: #1c1c1c;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.95em;
     }
 
     .location-name {
       font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 1.1em;
+    }
+
+    .weather-info {
+      margin-top: 3px;
     }
 
     #video-container {
-      width: 55%;
+      flex: 1;
       padding: 20px;
-      height: 100%;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background-color: #111;
+      border-radius: 12px;
     }
 
     iframe {
+      flex-grow: 1;
       width: 100%;
-      height: 80%;
+      height: 100%;
       border: none;
+      border-radius: 10px;
     }
 
     @media screen and (max-width: 1080px) {
@@ -71,15 +99,16 @@
       #weather-container,
       #video-container {
         width: 100%;
+        height: auto;
         margin-bottom: 20px;
+      }
+
+      #weather-locations {
+        grid-template-columns: 1fr;
       }
 
       iframe {
         height: 450px;
-      }
-
-      #weather-container {
-        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -93,7 +122,6 @@
       <div id="weather-bulletin">
         <p>Current weather in the areas surrounding Greenwich:</p>
       </div>
-
       <div id="weather-locations">
         <!-- Weather info loads here -->
       </div>
@@ -101,8 +129,7 @@
 
     <!-- Video Section -->
     <div id="video-container">
-      <iframe src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
-        allowfullscreen></iframe>
+      <iframe src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA" allowfullscreen></iframe>
     </div>
   </div>
 
