@@ -34,25 +34,29 @@
     }
     .line-status {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px;
-      border: 1px solid #ddd;
+      width: 100%;
+      height: 40px;
+      overflow: hidden;
       border-radius: 5px;
-      background-color: #fafafa;
+      box-shadow: inset 0 0 0 1px #ccc;
     }
     .line-name {
+      display: flex;
+      align-items: center;
       color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
+      padding: 0 10px;
       font-weight: bold;
       white-space: nowrap;
+      height: 100%;
     }
     .status-text {
-      padding: 5px 10px;
-      border-radius: 5px;
-      color: white;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
       white-space: nowrap;
+      color: white;
+      flex: 1;
+      height: 100%;
     }
     .status-good { background-color: green; }
     .status-minor { background-color: orange; }
@@ -73,10 +77,17 @@
     .dlr-color { background-color: #00AFAD; }
     .overground-color { background-color: #E86A10; }
     .tram-color { background-color: #00A300; }
+    .river-bus { background-color: #00b2a9; }
     .national-rail { background-color: #003087; }
-
     .woolwich-ferry { background-color: #6c757d; }
-    .rb1 { background-color: #0078d4; }
+
+    /* Optional new lines */
+    .liberty { background-color: #FF6F00; }
+    .lioness { background-color: #E6A800; }
+    .mildmay { background-color: #7B4B3A; }
+    .suffragette { background-color: #A63D70; }
+    .weaver { background-color: #4CBB17; }
+    .windrush { background-color: #009C99; }
   </style>
 </head>
 <body>
@@ -146,7 +157,6 @@
       const output = document.getElementById("nr-output");
       output.innerHTML = "<h2>National Rail Service Status</h2>";
 
-      // Regular National Rail lines
       const services = [
         { route: "Southeastern: Woolwich Line", status: "Good Service" },
         { route: "Southeastern: Bexleyheath Line", status: "Good Service" },
@@ -172,7 +182,7 @@
 
       output.appendChild(serviceContainer);
 
-      // River & Ferry section
+      // Woolwich Ferry only
       const riverHeader = document.createElement("h3");
       riverHeader.textContent = "River & Ferry Services";
       output.appendChild(riverHeader);
@@ -181,33 +191,27 @@
       riverContainer.className = "status-section";
 
       try {
-        const res = await fetch("https://api.tfl.gov.uk/line/mode/river-bus,ferry/status");
+        const res = await fetch("https://api.tfl.gov.uk/line/mode/ferry/status");
         const data = await res.json();
 
-        const lineCssClasses = {
-          "Woolwich Ferry": "woolwich-ferry",
-          "RB1": "rb1"
-        };
-
-        data.forEach(line => {
-          const lineName = line.name;
-          const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
+        const woolwich = data.find(line => line.name === "Woolwich Ferry");
+        if (woolwich) {
+          const status = woolwich.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
           const statusClass = status.includes("Good") ? "status-good" :
                               status.includes("Minor") ? "status-minor" : "status-severe";
-          const cssClass = lineCssClasses[lineName] || "";
 
           const div = document.createElement("div");
           div.classList.add("line-status");
           div.innerHTML = `
-            <div class="line-name ${cssClass}">${lineName}</div>
+            <div class="line-name woolwich-ferry">Woolwich Ferry</div>
             <div class="status-text ${statusClass}">${status}</div>
           `;
           riverContainer.appendChild(div);
-        });
+        }
 
       } catch (err) {
         const errorMsg = document.createElement("p");
-        errorMsg.textContent = "Error fetching river/ferry status.";
+        errorMsg.textContent = "Error fetching Woolwich Ferry status.";
         riverContainer.appendChild(errorMsg);
         console.error(err);
       }
@@ -220,7 +224,6 @@
       fetchNationalRailStatus();
     }
 
-    // Load on page and refresh every 5 minutes
     refreshAll();
     setInterval(refreshAll, 5 * 60 * 1000);
   </script>
