@@ -11,7 +11,7 @@
       background-color: #f4f4f4;
       color: #333;
     }
-    h1, h2, h3 {
+    h1, h2 {
       color: #005eb8;
     }
     .container {
@@ -23,200 +23,164 @@
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    #tfl-output, #nr-output {
-      display: flex;
-      flex-direction: column;
-    }
-    .tfl-grid, .status-section {
+    #tfl-output {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+    #nr-output {
+      display: flex;
+      flex-direction: column;
+    }
     .line-status {
       display: flex;
-      width: 100%;
-      height: 40px;
-      overflow: hidden;
+      flex-wrap: nowrap;
+      align-items: stretch;
       border-radius: 5px;
-      box-shadow: inset 0 0 0 1px #ccc;
+      overflow: hidden;
+      border: 1px solid #ccc;
     }
     .line-name {
-      display: flex;
-      align-items: center;
-      color: white;
-      padding: 0 10px;
+      padding: 8px 10px;
       font-weight: bold;
       white-space: nowrap;
-      height: 100%;
-    }
-    .status-text {
       display: flex;
       align-items: center;
-      padding: 0 10px;
-      white-space: nowrap;
+    }
+    .status-text {
+      flex-grow: 1;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
       color: white;
-      flex: 1;
-      height: 100%;
+      font-weight: bold;
     }
     .status-good { background-color: green; }
     .status-minor { background-color: orange; }
     .status-severe { background-color: red; }
 
-    .bakerloo { background-color: #B36305; }
-    .central { background-color: #E30613; }
+    /* TfL Line Colours */
+    .bakerloo { background-color: #B36305; color: white; }
+    .central { background-color: #E30613; color: white; }
     .circle { background-color: #FFD300; color: black; }
-    .district { background-color: #00782A; }
-    .elizabeth { background-color: #6950A1; }
+    .district { background-color: #00782A; color: white; }
+    .elizabeth { background-color: #6950A1; color: white; }
     .hammersmith-city { background-color: #F3A9BB; color: black; }
     .jubilee { background-color: #A0A5A9; color: black; }
-    .metropolitan { background-color: #9B0056; }
-    .northern { background-color: black; }
-    .piccadilly { background-color: #003688; }
-    .victoria { background-color: #0098D4; }
+    .metropolitan { background-color: #9B0056; color: white; }
+    .northern { background-color: black; color: white; }
+    .piccadilly { background-color: #003688; color: white; }
+    .victoria { background-color: #0098D4; color: white; }
     .waterloo-city { background-color: #76D0BD; color: black; }
-    .dlr-color { background-color: #00AFAD; }
-    .overground-color { background-color: #E86A10; }
-    .tram-color { background-color: #00A300; }
-    .river-bus { background-color: #00b2a9; }
-    .national-rail { background-color: #003087; }
-    .woolwich-ferry { background-color: #6c757d; }
+    .dlr-color { background-color: #00AFAD; color: white; }
+    .overground-color { background-color: #E86A10; color: white; }
+    .tram-color { background-color: #00A300; color: white; }
 
-    /* Optional new lines */
-    .liberty { background-color: #FF6F00; }
-    .lioness { background-color: #E6A800; }
-    .mildmay { background-color: #7B4B3A; }
-    .suffragette { background-color: #A63D70; }
-    .weaver { background-color: #4CBB17; }
-    .windrush { background-color: #009C99; }
+    /* National Rail & River */
+    .national-rail { background-color: #003087; color: white; }
+    .river-service { background-color: #009CDE; color: white; }
+
+    /* Custom Lines from Image */
+    .liberty { background-color: #4d4d4d; color: white; }
+    .lioness { background-color: #f5bd00; color: black; }
+    .mildmay { background-color: #3473b7; color: white; }
+    .suffragette { background-color: #38a68d; color: white; }
+    .weaver { background-color: #8a1d60; color: white; }
+    .windrush { background-color: #d1384b; color: white; }
   </style>
 </head>
 <body>
+  <h1>TfL and National Rail Service Status</h1>
   <div class="container">
-    <div id="tfl-output">
+    <div>
       <h2>TfL Service Status</h2>
-      <p>Loading TfL service status...</p>
+      <div id="tfl-output">
+        <p>Loading TfL status...</p>
+      </div>
     </div>
-
     <div id="nr-output">
-      <h2>National Rail Service Status</h2>
-      <p>Loading National Rail service status...</p>
+      <h2>National Rail & River</h2>
+      <p>Loading National Rail status...</p>
     </div>
   </div>
 
   <script>
+    const lineCssClasses = {
+      "Bakerloo": "bakerloo",
+      "Central": "central",
+      "Circle": "circle",
+      "District": "district",
+      "Elizabeth line": "elizabeth",
+      "Hammersmith & City": "hammersmith-city",
+      "Jubilee": "jubilee",
+      "Metropolitan": "metropolitan",
+      "Northern": "northern",
+      "Piccadilly": "piccadilly",
+      "Victoria": "victoria",
+      "Waterloo & City": "waterloo-city",
+      "DLR": "dlr-color",
+      "London Overground": "overground-color",
+      "Tram": "tram-color",
+      "Liberty": "liberty",
+      "Lioness": "lioness",
+      "Mildmay": "mildmay",
+      "Suffragette": "suffragette",
+      "Weaver": "weaver",
+      "Windrush": "windrush"
+    };
+
     async function fetchTfLStatus() {
       const output = document.getElementById("tfl-output");
       try {
         const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram/status");
         const data = await res.json();
-
-        output.innerHTML = "<h2>TfL Service Status</h2><div class='tfl-grid'></div>";
-        const grid = output.querySelector('.tfl-grid');
-
-        const lineCssClasses = {
-          "Bakerloo": "bakerloo",
-          "Central": "central",
-          "Circle": "circle",
-          "District": "district",
-          "Elizabeth line": "elizabeth",
-          "Hammersmith & City": "hammersmith-city",
-          "Jubilee": "jubilee",
-          "Metropolitan": "metropolitan",
-          "Northern": "northern",
-          "Piccadilly": "piccadilly",
-          "Victoria": "victoria",
-          "Waterloo & City": "waterloo-city",
-          "DLR": "dlr-color",
-          "London Overground": "overground-color",
-          "Tram": "tram-color"
-        };
+        output.innerHTML = "";
 
         data.forEach(line => {
           const lineName = line.name;
           const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
-          const statusClass = status.includes("Good") ? "status-good" :
-                              status.includes("Minor") ? "status-minor" : "status-severe";
           const cssClass = lineCssClasses[lineName] || "";
+          const statusClass = status.includes("Good") ? "status-good"
+                              : status.includes("Minor") ? "status-minor"
+                              : "status-severe";
 
-          const div = document.createElement("div");
-          div.classList.add("line-status");
-          div.innerHTML = `
-            <div class="line-name ${cssClass}">${lineName}</div>
-            <div class="status-text ${statusClass}">${status}</div>
-          `;
-          grid.appendChild(div);
+          output.innerHTML += `
+            <div class="line-status">
+              <div class="line-name ${cssClass}">${lineName}</div>
+              <div class="status-text ${statusClass}">${status}</div>
+            </div>`;
         });
-
       } catch (err) {
-        output.innerHTML = "Error fetching TfL status.";
+        output.innerHTML = "<p>Error loading TfL data.</p>";
         console.error(err);
       }
     }
 
     async function fetchNationalRailStatus() {
       const output = document.getElementById("nr-output");
-      output.innerHTML = "<h2>National Rail Service Status</h2>";
+      output.innerHTML = "<h2>National Rail & River</h2>";
 
       const services = [
         { route: "Southeastern: Woolwich Line", status: "Good Service" },
         { route: "Southeastern: Bexleyheath Line", status: "Good Service" },
         { route: "Southeastern: Sidcup Line", status: "Good Service" },
         { route: "Southeastern: Hayes Line", status: "Good Service" },
-        { route: "Thameslink: Rainham Line", status: "Good Service" }
+        { route: "Thameslink: Rainham Line", status: "Good Service" },
+        { route: "Woolwich Ferry", status: "Good Service", class: "river-service" }
       ];
 
-      const serviceContainer = document.createElement("div");
-      serviceContainer.className = "status-section";
-
       services.forEach(service => {
-        const statusClass = service.status.includes("Good") ? "status-good" :
-                            service.status.includes("Delayed") ? "status-minor" : "status-severe";
-        const div = document.createElement("div");
-        div.classList.add("line-status");
-        div.innerHTML = `
-          <div class="line-name national-rail">National Rail</div>
-          <div class="status-text ${statusClass}">${service.route}: ${service.status}</div>
-        `;
-        serviceContainer.appendChild(div);
+        const statusClass = service.status.includes("Good") ? "status-good"
+                            : service.status.includes("Minor") ? "status-minor"
+                            : "status-severe";
+        const lineClass = service.class || "national-rail";
+
+        output.innerHTML += `
+          <div class="line-status">
+            <div class="line-name ${lineClass}">${lineClass === "river-service" ? "River" : "National Rail"}</div>
+            <div class="status-text ${statusClass}">${service.route}: ${service.status}</div>
+          </div>`;
       });
-
-      output.appendChild(serviceContainer);
-
-      // Woolwich Ferry only
-      const riverHeader = document.createElement("h3");
-      riverHeader.textContent = "River & Ferry Services";
-      output.appendChild(riverHeader);
-
-      const riverContainer = document.createElement("div");
-      riverContainer.className = "status-section";
-
-      try {
-        const res = await fetch("https://api.tfl.gov.uk/line/mode/ferry/status");
-        const data = await res.json();
-
-        const woolwich = data.find(line => line.name === "Woolwich Ferry");
-        if (woolwich) {
-          const status = woolwich.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
-          const statusClass = status.includes("Good") ? "status-good" :
-                              status.includes("Minor") ? "status-minor" : "status-severe";
-
-          const div = document.createElement("div");
-          div.classList.add("line-status");
-          div.innerHTML = `
-            <div class="line-name woolwich-ferry">Woolwich Ferry</div>
-            <div class="status-text ${statusClass}">${status}</div>
-          `;
-          riverContainer.appendChild(div);
-        }
-
-      } catch (err) {
-        const errorMsg = document.createElement("p");
-        errorMsg.textContent = "Error fetching Woolwich Ferry status.";
-        riverContainer.appendChild(errorMsg);
-        console.error(err);
-      }
-
-      output.appendChild(riverContainer);
     }
 
     function refreshAll() {
@@ -224,8 +188,10 @@
       fetchNationalRailStatus();
     }
 
-    refreshAll();
-    setInterval(refreshAll, 5 * 60 * 1000);
+    window.onload = () => {
+      refreshAll();
+      setInterval(refreshAll, 60000); // Refresh every 60 seconds
+    };
   </script>
 </body>
 </html>
