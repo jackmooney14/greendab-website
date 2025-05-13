@@ -11,7 +11,7 @@
       background-color: #f4f4f4;
       color: #333;
     }
-    h1, h2 {
+    h1, h2, h3 {
       color: #005eb8;
     }
     .container {
@@ -27,7 +27,7 @@
       display: flex;
       flex-direction: column;
     }
-    .tfl-grid {
+    .tfl-grid, .status-section {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
@@ -75,20 +75,8 @@
     .tram-color { background-color: #00A300; }
     .national-rail { background-color: #003087; }
 
-    .liberty { background-color: #FF6F00; }
-    .lioness { background-color: #E6A800; }
-    .mildmay { background-color: #7B4B3A; }
-    .suffragette { background-color: #A63D70; }
-    .weaver { background-color: #4CBB17; }
-    .windrush { background-color: #009C99; }
-
     .woolwich-ferry { background-color: #6c757d; }
     .rb1 { background-color: #0078d4; }
-
-    .liberty .line-name, .lioness .line-name, .mildmay .line-name, 
-    .suffragette .line-name, .weaver .line-name, .windrush .line-name {
-      color: white;
-    }
   </style>
 </head>
 <body>
@@ -108,7 +96,7 @@
     async function fetchTfLStatus() {
       const output = document.getElementById("tfl-output");
       try {
-        const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram,river-bus,ferry/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
+        const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram/status");
         const data = await res.json();
 
         output.innerHTML = "<h2>TfL Service Status</h2><div class='tfl-grid'></div>";
@@ -129,15 +117,7 @@
           "Waterloo & City": "waterloo-city",
           "DLR": "dlr-color",
           "London Overground": "overground-color",
-          "Tram": "tram-color",
-          "Liberty": "liberty",
-          "Lioness": "lioness",
-          "Mildmay": "mildmay",
-          "Suffragette": "suffragette",
-          "Weaver": "weaver",
-          "Windrush": "windrush",
-          "Woolwich Ferry": "woolwich-ferry",
-          "RB1": "rb1"
+          "Tram": "tram-color"
         };
 
         data.forEach(line => {
@@ -166,6 +146,7 @@
       const output = document.getElementById("nr-output");
       output.innerHTML = "<h2>National Rail Service Status</h2>";
 
+      // Regular National Rail lines
       const services = [
         { route: "Southeastern: Woolwich Line", status: "Good Service" },
         { route: "Southeastern: Bexleyheath Line", status: "Good Service" },
@@ -173,6 +154,9 @@
         { route: "Southeastern: Hayes Line", status: "Good Service" },
         { route: "Thameslink: Rainham Line", status: "Good Service" }
       ];
+
+      const serviceContainer = document.createElement("div");
+      serviceContainer.className = "status-section";
 
       services.forEach(service => {
         const statusClass = service.status.includes("Good") ? "status-good" :
@@ -183,8 +167,52 @@
           <div class="line-name national-rail">National Rail</div>
           <div class="status-text ${statusClass}">${service.route}: ${service.status}</div>
         `;
-        output.appendChild(div);
+        serviceContainer.appendChild(div);
       });
+
+      output.appendChild(serviceContainer);
+
+      // River & Ferry section
+      const riverHeader = document.createElement("h3");
+      riverHeader.textContent = "River & Ferry Services";
+      output.appendChild(riverHeader);
+
+      const riverContainer = document.createElement("div");
+      riverContainer.className = "status-section";
+
+      try {
+        const res = await fetch("https://api.tfl.gov.uk/line/mode/river-bus,ferry/status");
+        const data = await res.json();
+
+        const lineCssClasses = {
+          "Woolwich Ferry": "woolwich-ferry",
+          "RB1": "rb1"
+        };
+
+        data.forEach(line => {
+          const lineName = line.name;
+          const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
+          const statusClass = status.includes("Good") ? "status-good" :
+                              status.includes("Minor") ? "status-minor" : "status-severe";
+          const cssClass = lineCssClasses[lineName] || "";
+
+          const div = document.createElement("div");
+          div.classList.add("line-status");
+          div.innerHTML = `
+            <div class="line-name ${cssClass}">${lineName}</div>
+            <div class="status-text ${statusClass}">${status}</div>
+          `;
+          riverContainer.appendChild(div);
+        });
+
+      } catch (err) {
+        const errorMsg = document.createElement("p");
+        errorMsg.textContent = "Error fetching river/ferry status.";
+        riverContainer.appendChild(errorMsg);
+        console.error(err);
+      }
+
+      output.appendChild(riverContainer);
     }
 
     function refreshAll() {
@@ -192,9 +220,8 @@
       fetchNationalRailStatus();
     }
 
-    // Initial fetch
+    // Load on page and refresh every 5 minutes
     refreshAll();
-    // Refresh every 5 minutes
     setInterval(refreshAll, 5 * 60 * 1000);
   </script>
 </body>
