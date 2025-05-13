@@ -7,16 +7,13 @@
   <style>
     body {
       font-family: sans-serif;
-      margin: 0;
+      margin: 20px;
       background-color: #f4f4f4;
       color: #333;
-      padding: 20px;
     }
-
     h1, h2 {
       color: #005eb8;
     }
-
     .container {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -26,57 +23,41 @@
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-
     #tfl-output, #nr-output {
       display: flex;
       flex-direction: column;
     }
-
-    #tfl-lines {
+    .tfl-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
-
     .line-status {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      background: #eee;
+      align-items: center;
       padding: 8px;
-      border-radius: 6px;
-      height: 48px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #fafafa;
     }
-
     .line-name {
       color: white;
       padding: 5px 10px;
       border-radius: 5px;
       font-weight: bold;
       white-space: nowrap;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
     }
-
     .status-text {
       padding: 5px 10px;
       border-radius: 5px;
       color: white;
-      flex-grow: 1;
-      display: flex;
-      align-items: center;
-      height: 100%;
+      white-space: nowrap;
     }
-
     .status-good { background-color: green; }
     .status-minor { background-color: orange; }
     .status-severe { background-color: red; }
 
-    /* TfL line colors */
     .bakerloo { background-color: #B36305; }
     .central { background-color: #E30613; }
     .circle { background-color: #FFD300; color: black; }
@@ -94,7 +75,6 @@
     .tram-color { background-color: #00A300; }
     .national-rail { background-color: #003087; }
 
-    /* New Lines */
     .liberty { background-color: #FF6F00; }
     .lioness { background-color: #E6A800; }
     .mildmay { background-color: #7B4B3A; }
@@ -102,14 +82,12 @@
     .weaver { background-color: #4CBB17; }
     .windrush { background-color: #009C99; }
 
-    @media (max-width: 768px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
+    .woolwich-ferry { background-color: #6c757d; }
+    .rb1 { background-color: #0078d4; }
 
-      #tfl-lines {
-        grid-template-columns: 1fr;
-      }
+    .liberty .line-name, .lioness .line-name, .mildmay .line-name, 
+    .suffragette .line-name, .weaver .line-name, .windrush .line-name {
+      color: white;
     }
   </style>
 </head>
@@ -117,23 +95,24 @@
   <div class="container">
     <div id="tfl-output">
       <h2>TfL Service Status</h2>
-      <div id="tfl-lines"><p>Loading TfL services...</p></div>
+      <p>Loading TfL service status...</p>
     </div>
 
     <div id="nr-output">
       <h2>National Rail Service Status</h2>
-      <p>Loading National Rail services...</p>
+      <p>Loading National Rail service status...</p>
     </div>
   </div>
 
   <script>
     async function fetchTfLStatus() {
-      const outputContainer = document.getElementById("tfl-lines");
-      outputContainer.innerHTML = "";
-
+      const output = document.getElementById("tfl-output");
       try {
-        const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
+        const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram,river-bus,ferry/status?app_key=044bd54cfdc94f03ba10314d52eb59fe");
         const data = await res.json();
+
+        output.innerHTML = "<h2>TfL Service Status</h2><div class='tfl-grid'></div>";
+        const grid = output.querySelector('.tfl-grid');
 
         const lineCssClasses = {
           "Bakerloo": "bakerloo",
@@ -156,28 +135,29 @@
           "Mildmay": "mildmay",
           "Suffragette": "suffragette",
           "Weaver": "weaver",
-          "Windrush": "windrush"
+          "Windrush": "windrush",
+          "Woolwich Ferry": "woolwich-ferry",
+          "RB1": "rb1"
         };
 
         data.forEach(line => {
           const lineName = line.name;
           const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
-          const cssClass = lineCssClasses[lineName] || "";
           const statusClass = status.includes("Good") ? "status-good" :
                               status.includes("Minor") ? "status-minor" : "status-severe";
+          const cssClass = lineCssClasses[lineName] || "";
 
-          const lineEl = document.createElement("div");
-          lineEl.className = "line-status";
-
-          lineEl.innerHTML = `
+          const div = document.createElement("div");
+          div.classList.add("line-status");
+          div.innerHTML = `
             <div class="line-name ${cssClass}">${lineName}</div>
             <div class="status-text ${statusClass}">${status}</div>
           `;
-
-          outputContainer.appendChild(lineEl);
+          grid.appendChild(div);
         });
+
       } catch (err) {
-        outputContainer.innerHTML = "<p>Error fetching TfL status.</p>";
+        output.innerHTML = "Error fetching TfL status.";
         console.error(err);
       }
     }
@@ -196,28 +176,26 @@
 
       services.forEach(service => {
         const statusClass = service.status.includes("Good") ? "status-good" :
-                            service.status.includes("Minor") ? "status-minor" : "status-severe";
-
-        const serviceItem = document.createElement("div");
-        serviceItem.classList.add("line-status");
-        serviceItem.innerHTML = `
+                            service.status.includes("Delayed") ? "status-minor" : "status-severe";
+        const div = document.createElement("div");
+        div.classList.add("line-status");
+        div.innerHTML = `
           <div class="line-name national-rail">National Rail</div>
           <div class="status-text ${statusClass}">${service.route}: ${service.status}</div>
         `;
-        output.appendChild(serviceItem);
+        output.appendChild(div);
       });
     }
 
-    function refreshAllStatuses() {
+    function refreshAll() {
       fetchTfLStatus();
       fetchNationalRailStatus();
     }
 
-    window.onload = () => {
-      refreshAllStatuses();
-      setInterval(refreshAllStatuses, 60000); // Refresh every 60 seconds
-    };
+    // Initial fetch
+    refreshAll();
+    // Refresh every 5 minutes
+    setInterval(refreshAll, 5 * 60 * 1000);
   </script>
 </body>
 </html>
-
