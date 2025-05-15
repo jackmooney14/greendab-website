@@ -142,6 +142,8 @@
       { name: 'Dartford', coordinates: { lat: 51.4432, lon: 0.2201 } },
       { name: 'Eltham', coordinates: { lat: 51.4479, lon: 0.0602 } },
       { name: 'Greenwich', coordinates: { lat: 51.4769, lon: -0.0005 } },
+      { name: 'Orpington', coordinates: { lat: 51.3744, lon: 0.0931 } },
+      { name: 'Sidcup', coordinates: { lat: 51.4262, lon: 0.1037 } },
       { name: 'Welling', coordinates: { lat: 51.4655, lon: 0.0875 } },
       { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
     ];
@@ -179,7 +181,7 @@
       getWeatherData(location);
     });
 
-    // Refresh every 10 minutes
+    // Refresh weather every 10 minutes
     setInterval(() => {
       document.getElementById('weather-locations').innerHTML = '';
       locations.forEach(location => {
@@ -188,5 +190,26 @@
     }, 600000);
   </script>
 
+  <!-- Auto Refresh at Midnight + Every 8 Hours -->
+  <script>
+    function scheduleMidnightRefresh() {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      const timeUntilMidnight = midnight.getTime() - now.getTime();
+      setTimeout(() => {
+        location.reload();
+      }, timeUntilMidnight);
+    }
+
+    // Also refresh every 8 hours (as fallback)
+    setInterval(() => {
+      location.reload();
+    }, 28800000); // 8 hours
+
+    scheduleMidnightRefresh();
+  </script>
+
 </body>
 </html>
+
