@@ -41,7 +41,7 @@
 
     #weather-container h2 {
       font-size: 1.5em;
-      margin-bottom: 10px;
+      margin: 0 0 10px 0; /* Reduced top margin */
     }
 
     #weather-bulletin {
@@ -138,11 +138,11 @@
     const locations = [
       { name: 'Abbey Wood', coordinates: { lat: 51.4933, lon: 0.1042 } },
       { name: 'Bexleyheath', coordinates: { lat: 51.4563, lon: 0.1484 } },
+      { name: 'Blackheath', coordinates: { lat: 51.4675, lon: 0.0074 } },
       { name: 'Charlton', coordinates: { lat: 51.4876, lon: 0.0167 } },
       { name: 'Dartford', coordinates: { lat: 51.4432, lon: 0.2201 } },
       { name: 'Eltham', coordinates: { lat: 51.4479, lon: 0.0602 } },
       { name: 'Greenwich', coordinates: { lat: 51.4769, lon: -0.0005 } },
-      { name: 'Orpington', coordinates: { lat: 51.3744, lon: 0.0931 } },
       { name: 'Sidcup', coordinates: { lat: 51.4262, lon: 0.1037 } },
       { name: 'Welling', coordinates: { lat: 51.4655, lon: 0.0875 } },
       { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
@@ -177,39 +177,34 @@
       weatherContainer.appendChild(locationElement);
     }
 
-    locations.forEach(location => {
-      getWeatherData(location);
-    });
-
-    // Refresh weather every 10 minutes
-    setInterval(() => {
+    function loadWeather() {
       document.getElementById('weather-locations').innerHTML = '';
-      locations.forEach(location => {
-        getWeatherData(location);
-      });
-    }, 600000);
-  </script>
+      locations.forEach(getWeatherData);
+    }
 
-  <!-- Auto Refresh at Midnight + Every 8 Hours -->
-  <script>
-    function scheduleMidnightRefresh() {
+    // Initial load
+    loadWeather();
+
+    // Refresh every 10 minutes
+    setInterval(loadWeather, 600000);
+
+    // Auto-refresh at midnight
+    function scheduleMidnightReload() {
       const now = new Date();
       const midnight = new Date();
       midnight.setHours(24, 0, 0, 0);
-      const timeUntilMidnight = midnight.getTime() - now.getTime();
+      const timeout = midnight.getTime() - now.getTime();
       setTimeout(() => {
         location.reload();
-      }, timeUntilMidnight);
+      }, timeout);
     }
+    scheduleMidnightReload();
 
-    // Also refresh every 8 hours (as fallback)
+    // Refresh every 8 hours as a backup
     setInterval(() => {
       location.reload();
-    }, 28800000); // 8 hours
-
-    scheduleMidnightRefresh();
+    }, 8 * 60 * 60 * 1000);
   </script>
 
 </body>
 </html>
-
