@@ -5,30 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Video and Weather</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 20px;
-      height: 100vh;
+    html, body {
       margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
       background-color: #000;
       color: white;
-      overflow: hidden;
+    }
+
+    *, *::before, *::after {
+      box-sizing: inherit;
     }
 
     #main-container {
       display: flex;
       justify-content: space-between;
-      width: 100%;
-      max-width: 1920px;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       gap: 20px;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
     #weather-container {
       width: 35%;
+      height: 100%;
       padding: 20px;
       overflow-y: auto;
       box-sizing: border-box;
@@ -36,12 +41,11 @@
       flex-direction: column;
       background-color: #111;
       border-radius: 12px;
-      max-height: 100%;
     }
 
     #weather-container h2 {
       font-size: 1.5em;
-      margin: 0 0 10px 0; /* Reduced top margin */
+      margin: 0 0 10px 0;
     }
 
     #weather-bulletin {
@@ -81,10 +85,10 @@
       justify-content: center;
       background-color: #111;
       border-radius: 12px;
+      height: 100%;
     }
 
     iframe {
-      flex-grow: 1;
       width: 100%;
       height: 100%;
       border: none;
@@ -94,6 +98,9 @@
     @media screen and (max-width: 1080px) {
       #main-container {
         flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+        padding: 20px;
       }
 
       #weather-container,
@@ -112,6 +119,9 @@
       }
     }
   </style>
+
+  <!-- Player.js library to control embedded video -->
+  <script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
 </head>
 <body>
 
@@ -129,7 +139,11 @@
 
     <!-- Video Section -->
     <div id="video-container">
-      <iframe src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA" allowfullscreen></iframe>
+      <iframe
+        id="vidgrid-player"
+        src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
+        allowfullscreen
+      ></iframe>
     </div>
   </div>
 
@@ -204,7 +218,16 @@
     setInterval(() => {
       location.reload();
     }, 8 * 60 * 60 * 1000);
+
+    // Hide vidgrid controls using Player.js
+    document.addEventListener("DOMContentLoaded", function() {
+      var iframe = document.getElementById('vidgrid-player');
+      var player = new playerjs.Player(iframe);
+      player.on('ready', function() {
+        player.setControls(false);
+      });
+    });
   </script>
 
 </body>
-</html>
+</html
