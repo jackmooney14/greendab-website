@@ -39,6 +39,7 @@
       border-radius: 5px;
       overflow: hidden;
       border: 1px solid #ccc;
+      margin-bottom: 8px;
     }
     .line-name {
       padding: 8px 10px;
@@ -59,7 +60,6 @@
     .status-minor { background-color: orange; }
     .status-severe { background-color: red; }
 
-    /* TfL Line Colours */
     .bakerloo { background-color: #B36305; color: white; }
     .central { background-color: #E30613; color: white; }
     .circle { background-color: #FFD300; color: black; }
@@ -76,11 +76,9 @@
     .overground-color { background-color: #E86A10; color: white; }
     .tram-color { background-color: #00A300; color: white; }
 
-    /* National Rail & River */
     .national-rail { background-color: #003087; color: white; }
     .river-service { background-color: #009CDE; color: white; }
 
-    /* Custom Lines from Image */
     .liberty { background-color: #4d4d4d; color: white; }
     .lioness { background-color: #f5bd00; color: black; }
     .mildmay { background-color: #3473b7; color: white; }
@@ -160,27 +158,75 @@
       const output = document.getElementById("nr-output");
       output.innerHTML = "<h2>National Rail & River</h2>";
 
-      const services = [
-        { route: "Southeastern: Woolwich Line", status: "Good Service" },
-        { route: "Southeastern: Bexleyheath Line", status: "Good Service" },
-        { route: "Southeastern: Sidcup Line", status: "Good Service" },
-        { route: "Southeastern: Hayes Line", status: "Good Service" },
-        { route: "Thameslink: Rainham Line", status: "Good Service" },
-        { route: "Woolwich Ferry", status: "Good Service", class: "river-service" }
+      const lines = [
+        { name: "Southeastern: Bexleyheath Line", stations: ["LBG", "BEX"] },
+        { name: "Southeastern: Sidcup Line", stations: ["LBG", "SID"] },
+        { name: "Southeastern: Hayes Line", stations: ["CST", "HYS"] },
+        { name: "Southeastern: Woolwich Line", stations: ["CHX", "WWA"] },
+        { name: "Thameslink: Rainham Line", stations: ["LBG", "RAI"] },
+        { name: "Woolwich Ferry", fixedStatus: "Good Service", class: "river-service" }
       ];
 
-      services.forEach(service => {
-        const statusClass = service.status.includes("Good") ? "status-good"
-                            : service.status.includes("Minor") ? "status-minor"
-                            : "status-severe";
-        const lineClass = service.class || "national-rail";
+      for (const line of lines) {
+        if (line.fixedStatus) {
+          const statusClass = "status-good";
+          const lineClass = line.class || "national-rail";
+          output.innerHTML += `
+            <div class="line-status">
+              <div class="line-name ${lineClass}">${line.name}</div>
+              <div class="status-text ${statusClass}">${line.fixedStatus}</div>
+            </div>`;
+          continue;
+        }
+
+        let delayedCount = 0;
+        let totalChecked = 0;
+
+        for (const station of line.stations) {
+          try {
+            const res = await fetch(`https://transportapi.com/v3/uk/train/station/${station}/live.json?app_id=b90a27fb&app_key=268fcfe8b93661cd2761ec4664feed71&darwin=true&train_status=passenger`);
+            const data = await res.json();
+
+            const services = data.departures.all || [];
+            const relevantServices = services.filter(dep =>
+              dep.operator_name?.includes("Southeastern") || dep.operator_name?.includes("Thameslink")
+            );
+
+            totalChecked += relevantServices.length;
+
+            delayedCount += relevantServices.filter(s =>
+              s.expected_departure_time !== s.aimed_departure_time ||
+              (s.status && s.status.toLowerCase().includes("cancelled"))
+            ).length;
+
+          } catch (err) {
+            console.error(`Error fetching from ${station}:`, err);
+          }
+        }
+
+        let status = "Unknown";
+        let statusClass = "status-severe";
+
+        if (totalChecked === 0) {
+          status = "No data";
+          statusClass = "status-minor";
+        } else if (delayedCount === 0) {
+          status = "Good Service";
+          statusClass = "status-good";
+        } else if (delayedCount / totalChecked < 0.3) {
+          status = `${delayedCount} delays`;
+          statusClass = "status-minor";
+        } else {
+          status = "Major Delays";
+          statusClass = "status-severe";
+        }
 
         output.innerHTML += `
           <div class="line-status">
-            <div class="line-name ${lineClass}">${lineClass === "river-service" ? "River" : "National Rail"}</div>
-            <div class="status-text ${statusClass}">${service.route}: ${service.status}</div>
+            <div class="line-name national-rail">${line.name}</div>
+            <div class="status-text ${statusClass}">${status}</div>
           </div>`;
-      });
+      }
     }
 
     function refreshAll() {
