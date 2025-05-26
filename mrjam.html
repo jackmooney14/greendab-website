@@ -3,113 +3,95 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Live TfL Cameras & Traffic Map</title>
-
-  <!-- Leaflet CSS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    crossorigin=""
-  />
-
+  <title>Live TfL Traffic Cameras</title>
   <style>
-    html, body { margin: 0; height: 100%; }
-    #map { width: 100%; height: 100vh; }
-    .popup-img { width: 300px; height: auto; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .camera-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .camera {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin: 10px;
+      padding: 10px;
+      width: 320px;
+      box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
+    }
+    .camera img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .camera-title {
+      text-align: center;
+      margin-top: 10px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <div id="map"></div>
-
-  <!-- Leaflet JS -->
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    crossorigin=""
-  ></script>
+  <h1>Live TfL Traffic Cameras</h1>
+  <div class="camera-container" id="cameraContainer">
+    <!-- Cameras will be inserted here -->
+  </div>
 
   <script>
     const appKey = '044bd54cfdc94f03ba10314d52eb59fe';
-    const map = L.map('map').setView([51.5074, -0.1278], 11);
+    const targetLocations = ['Blackwall Tunnel', 'A2', 'A20', "Shooter's Hill Road"];
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    async function loadCameras() {
+      try {
+        const response = await fetch(`https://api.tfl.gov.uk/Place/Type/JamCam?app_key=${appKey}`);
+        const data = await response.json();
 
-    const cameraMarkers = new Map();
-    const roadPolylines = [];
+        const cameraContainer = document.getElementById('cameraContainer');
+        cameraContainer.innerHTML = ''; // Clear existing content
 
-    // Fetch and display JamCams
-    function loadCameras() {
-      fetch(`https://api.tfl.gov.uk/Place/Type/JamCam?app_key=${appKey}`)
-        .then(response => response.json())
-        .then(data => {
-          data.forEach(cam => {
-            if (!cam.lat || !cam.lon) return;
+        data.forEach(cam => {
+          const title = cam.commonName;
+          const matches = targetLocations.some(location => title.toLowerCase().includes(location.toLowerCase()));
+          if (matches) {
+            const imageProp = cam.additionalProperties.find(prop => prop.key === 'imageUrl');
+            if (imageProp) {
+              const imageUrl = imageProp.value + `?timestamp=${Date.now()}`; // Prevent caching
 
-            const camImage = cam.additionalProperties.find(prop => prop.key === 'imageUrl')?.value;
-            const title = cam.commonName;
-            const imageUrl = camImage + `?timestamp=${Date.now()}`; // prevent caching
+              const cameraDiv = document.createElement('div');
+              cameraDiv.className = 'camera';
 
-            if (camImage) {
-              if (cameraMarkers.has(cam.id)) {
-                const marker = cameraMarkers.get(cam.id);
-                marker.setPopupContent(`<strong>${title}</strong><br/><img src="${imageUrl}" class="popup-img"/>`);
-              } else {
-                const marker = L.marker([cam.lat, cam.lon])
-                  .addTo(map)
-                  .bindPopup(`<strong>${title}</strong><br/><img src="${imageUrl}" class="popup-img"/>`);
-                cameraMarkers.set(cam.id, marker);
-              }
+              const img = document.createElement('img');
+              img.src = imageUrl;
+              img.alt = title;
+
+              const caption = document.createElement('div');
+              caption.className = 'camera-title';
+              caption.textContent = title;
+
+              cameraDiv.appendChild(img);
+              cameraDiv.appendChild(caption);
+              cameraContainer.appendChild(cameraDiv);
             }
-          });
-        })
-        .catch(err => console.error("Error loading cameras:", err));
+          }
+        });
+      } catch (error) {
+        console.error('Error loading cameras:', error);
+      }
     }
 
-    // Fetch and display live road congestion data
-    function loadTrafficStatus() {
-      fetch(`https://api.tfl.gov.uk/Road/All?app_key=${appKey}`)
-        .then(response => response.json())
-        .then(roads => {
-          // Clear previous polylines
-          roadPolylines.forEach(line => map.removeLayer(line));
-          roadPolylines.length = 0;
-
-          roads.forEach(road => {
-            const status = road.statusSeverity.toLowerCase();
-
-            // Choose color by severity
-            let color;
-            if (status.includes('good') || status.includes('free')) color = 'green';
-            else if (status.includes('slow') || status.includes('minor')) color = 'orange';
-            else color = 'red';
-
-            if (road.bounds && road.bounds.length > 0) {
-              const [southLat, westLon, northLat, eastLon] = road.bounds;
-              const polyline = L.rectangle([
-                [southLat, westLon],
-                [northLat, eastLon]
-              ], {
-                color: color,
-                weight: 2,
-                fillOpacity: 0.2
-              }).addTo(map);
-
-              polyline.bindTooltip(`${road.displayName}: ${road.statusSeverityDescription}`);
-              roadPolylines.push(polyline);
-            }
-          });
-        })
-        .catch(err => console.error("Error loading traffic status:", err));
-    }
-
-    // Load initially
+    // Initial load
     loadCameras();
-    loadTrafficStatus();
 
     // Refresh every 3 minutes
     setInterval(loadCameras, 180000);
-    setInterval(loadTrafficStatus, 180000);
   </script>
 </body>
 </html>
