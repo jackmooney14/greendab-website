@@ -41,7 +41,7 @@
 
     #weather-container h2 {
       font-size: 1.5em;
-      margin: 0 0 10px 0; /* Reduced top margin */
+      margin: 0 0 10px 0;
     }
 
     #weather-bulletin {
@@ -84,9 +84,9 @@
     }
 
     iframe {
-      flex-grow: 1;
       width: 100%;
-      height: 100%;
+      height: calc(100vh - 80px);
+      min-height: 480px;
       border: none;
       border-radius: 10px;
     }
@@ -113,13 +113,12 @@
     }
   </style>
 
-  <!-- Player.js library to control embedded video -->
+  <!-- Player.js library -->
   <script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
 </head>
 <body>
 
   <div id="main-container">
-    <!-- Weather Section -->
     <div id="weather-container">
       <h2>Weather Update</h2>
       <div id="weather-bulletin">
@@ -130,12 +129,14 @@
       </div>
     </div>
 
-    <!-- Video Section -->
     <div id="video-container">
       <iframe
         id="vidgrid-player"
         src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
         allowfullscreen
+        title="Vidgrid Embed"
+        loading="lazy"
+        <!-- sandbox="allow-scripts allow-same-origin allow-presentation" -->
       ></iframe>
     </div>
   </div>
@@ -155,7 +156,6 @@
       { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
     ];
 
-    // Sort alphabetically
     locations.sort((a, b) => a.name.localeCompare(b.name));
 
     function getWeatherData(location) {
@@ -164,9 +164,7 @@
 
       fetch(url)
         .then(response => response.json())
-        .then(data => {
-          displayWeather(location.name, data);
-        })
+        .then(data => displayWeather(location.name, data))
         .catch(error => console.error('Error fetching weather data:', error));
     }
 
@@ -174,13 +172,11 @@
       const weatherContainer = document.getElementById('weather-locations');
       const locationElement = document.createElement('div');
       locationElement.classList.add('location');
-
       locationElement.innerHTML = `
         <div class="location-name">${locationName}</div>
         <div class="weather-info">Temperature: <strong>${data.main.temp}°C</strong></div>
         <div class="weather-info">Weather: ${data.weather[0].description}</div>
       `;
-
       weatherContainer.appendChild(locationElement);
     }
 
@@ -207,21 +203,24 @@
     }
     scheduleMidnightReload();
 
-    // Refresh every 8 hours as a backup
-    setInterval(() => {
-      location.reload();
-    }, 8 * 60 * 60 * 1000);
+    // Backup reload every 8 hours
+    setInterval(() => location.reload(), 8 * 60 * 60 * 1000);
 
-    // Hide vidgrid controls using Player.js
-    document.addEventListener("DOMContentLoaded", function() {
-      var iframe = document.getElementById('vidgrid-player');
-      var player = new playerjs.Player(iframe);
-      player.on('ready', function() {
-        player.setControls(false);
+    // Player.js setup AFTER iframe loads
+    document.addEventListener("DOMContentLoaded", function () {
+      const iframe = document.getElementById("vidgrid-player");
+      iframe.addEventListener("load", function () {
+        try {
+          const player = new playerjs.Player(iframe);
+          player.on("ready", function () {
+            player.setControls(false);
+          });
+        } catch (e) {
+          console.warn("Player.js could not initialize:", e);
+        }
       });
     });
   </script>
 
 </body>
 </html>
-
