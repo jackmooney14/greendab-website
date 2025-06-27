@@ -111,8 +111,8 @@
 
     // Refresh interval for all data fetches (5 minutes)
     const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
-    // Weather refresh interval (15 minutes - weather doesn't change as fast)
-    const WEATHER_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
+    // Weather refresh interval (2 hours)
+    const WEATHER_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
     // Coordinates for Southeast London (tlLat, tlLon, brLat, brLon)
     const bbox = {
@@ -132,20 +132,18 @@
     // --- Weather Forecast Functions ---
     async function fetchWeather() {
       // OpenWeatherMap One Call API 3.0
-      const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${WEATHER_LAT}&lon=${WEATHER_LON}&exclude=minutely,hourly,alerts&units=metric&appid=${OPENWEATHER_KEY}`;
+      // Exclude minutely and alerts. Hourly and daily are needed for dynamic text.
+      const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${WEATHER_LAT}&lon=${WEATHER_LON}&exclude=minutely,alerts&units=metric&appid=${OPENWEATHER_KEY}`;
       const container = document.getElementById("weather-forecast");
 
       try {
         const resp = await fetch(url);
         if (!resp.ok) {
-          // Attempt to read error message from API if available
           let errorText = await resp.text();
           try {
             const errorJson = JSON.parse(errorText);
             errorText = errorJson.message || errorText;
-          } catch (e) {
-            // Not JSON, use as is
-          }
+          } catch (e) { /* Not JSON */ }
           throw new Error(`OpenWeatherMap API responded with status: ${resp.status} ${resp.statusText}. Message: ${errorText}`);
         }
         const data = await resp.json();
@@ -153,38 +151,71 @@
       } catch (error) {
         console.error("Error fetching weather data:", error);
         container.textContent = `Error loading weather: ${error.message}. Please check your API key and network connection.`;
-        return null; // Return null to indicate failure
+        return null; // Indicate failure
       }
     }
 
     function renderWeather(weatherData) {
         const container = document.getElementById("weather-forecast");
         if (!weatherData) {
-            // Error message already set by fetchWeather
-            return;
+            return; // Error message already set by fetchWeather
         }
 
         const current = weatherData.current;
-        // Daily forecast for 'today' is the first element in the daily array
-        const todayForecast = weatherData.daily[0];
+        const todayForecast = weatherData.daily[0]; // Today's daily forecast
+        const tomorrowForecast = weatherData.daily[1]; // Tomorrow's daily forecast (for evening/night forecast)
+        // const hourlyForecast = weatherData.hourly; // Use if more granular hourly descriptions are needed
 
-        if (!current || !todayForecast) {
+        if (!current || !todayForecast || !tomorrowForecast) { // Removed hourly from this check as it's not always critical for the main message
             container.textContent = "Weather data incomplete. Please try again.";
             return;
         }
 
-        const description = current.weather[0].description;
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        let greeting = "Hello";
+        let detailedForecast = "";
+
+        const currentDescription = current.weather[0].description;
         const currentTemp = Math.round(current.temp);
-        const highTemp = Math.round(todayForecast.temp.max);
-        const lowTemp = Math.round(todayForecast.temp.min);
         const feelsLike = Math.round(current.feels_like);
+        const todayHigh = Math.round(todayForecast.temp.max);
+        const todayLow = Math.round(todayForecast.temp.min);
+        const tomorrowHigh = Math.round(tomorrowForecast.temp.max);
+        const tomorrowLow = Math.round(tomorrowForecast.temp.min);
 
-        const forecastText = `
-            Good morning. Currently, the weather in Southeast London is ${description} with a temperature of ${currentTemp}°C, feeling like ${feelsLike}°C.
-            Today, expect a high of ${highTemp}°C and a low of ${lowTemp}°C.
-        `;
+        // Determine time of day and build message
+        if (currentHour >= 5 && currentHour < 12) { // Morning (5 AM to 11:59 AM)
+            greeting = "Good morning";
+            detailedForecast = `Currently, it's ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. For today, expect a high of ${todayHigh}°C and a low of ${todayLow}°C.`;
+        } else if (currentHour >= 12 && currentHour < 18) { // Afternoon (12 PM to 5:59 PM)
+            greeting = "Good afternoon";
+            detailedForecast = `The weather in Southeast London is currently ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. Temperatures will reach around ${todayHigh}°C this afternoon.`;
+            
+            // Get tonight's forecasted low and description from today's daily forecast (night temp)
+            const tonightLow = Math.round(todayForecast.temp.night || todayForecast.temp.min); 
+            const tonightDescription = todayForecast.weather[0].description; // Often general for the daily period
+            detailedForecast += ` Tonight, the low will be around ${tonightLow}°C, with ${tonightDescription}.`;
 
-        container.innerHTML = forecastText;
+        } else if (currentHour >= 18 && currentHour < 22) { // Evening (6 PM to 9:59 PM)
+            greeting = "Good evening";
+            detailedForecast = `It's currently ${currentDescription} in Southeast London at ${currentTemp}°C, feeling like ${feelsLike}°C.`;
+            
+            const tonightLow = Math.round(todayForecast.temp.night || todayForecast.temp.min);
+            const tonightDescription = todayForecast.weather[0].description; 
+            detailedForecast += ` Overnight, temperatures are set to drop to around ${tonightLow}°C, with ${tonightDescription}. Looking ahead to tomorrow, expect a high of ${tomorrowHigh}°C.`;
+
+        } else { // Night (10 PM to 4:59 AM)
+            greeting = "Good night";
+            detailedForecast = `The current temperature in Southeast London is ${currentTemp}°C, feeling like ${feelsLike}°C, with ${currentDescription}.`;
+            
+            const overnightLow = Math.round(todayForecast.temp.night || todayForecast.temp.min); // Still today's night low
+            const tomorrowDescription = tomorrowForecast.weather[0].description;
+            detailedForecast += ` Overnight, temperatures will fall to about ${overnightLow}°C. Looking ahead to tomorrow, expect a high of ${tomorrowHigh}°C and a low of ${tomorrowLow}°C, with ${tomorrowDescription}.`;
+        }
+
+        container.innerHTML = `<strong>${greeting}!</strong> ${detailedForecast}`;
     }
 
     // --- TomTom Traffic Functions ---
