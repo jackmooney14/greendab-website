@@ -14,15 +14,18 @@
     h1, h2 { text-align: center; }
     .section { margin-bottom: 2em; }
     .item { background: white; padding: 1em; margin-bottom: .8em; border-left: 6px solid; border-radius: 5px; }
-    .high { border-color: #e53935; }
-    .medium { border-color: #fb8c00; }
-    .low { border-color: #43a047; }
-    pre {
-      white-space: pre-wrap;
-      font-family: monospace;
-      background: #eee;
-      padding: 1em;
-      border-radius: 5px;
+    /* Existing severity colors */
+    .high { border-color: #e53935; } /* Red */
+    .medium { border-color: #fb8c00; } /* Orange */
+    .low { border-color: #43a047; } /* Green */
+
+    /* New style for tube lines to ensure consistent spacing */
+    .tube-line-item {
+        display: flex;
+        align-items: center; /* Vertically center content */
+    }
+    .tube-line-item strong {
+        margin-right: 0.5em;
     }
   </style>
 </head>
@@ -62,11 +65,8 @@
     // Refresh interval for all data fetches (5 minutes)
     const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
-    // --- UPDATED: Coordinates for Southeast London ---
-    // tlLat, tlLon, brLat, brLon
-    // Roughly covering Southwark, Lambeth (East), Lewisham, Greenwich, Bexley, Bromley
-    const bbox = "51.51,-0.12,51.30,0.25";
-    // -------------------------------------------------
+    // Coordinates for Southeast London
+    const bbox = "51.51,-0.12,51.30,0.25"; // tlLat, tlLon, brLat, brLon
 
     async function fetchTraffic() {
       const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
@@ -177,6 +177,7 @@
 
     async function fetchAndRenderTubeStatus() {
       const container = document.getElementById("tube-status");
+      container.innerHTML = ''; // Clear previous content
       try {
         const url = `https://api.tfl.gov.uk/Line/Mode/tube/Status?app_key=${TFL_KEY}`;
         const res = await fetch(url);
@@ -190,15 +191,60 @@
           return;
         }
 
-        const lines = data.map(line => {
+        // Sort lines: Issues first, then by severity, then alphabetically
+        data.sort((a, b) => {
+          const aSeverity = a.lineStatuses?.[0]?.statusSeverity;
+          const bSeverity = b.lineStatuses?.[0]?.statusSeverity;
+
+          // '10' typically means 'Good Service'
+          const aHasIssue = aSeverity !== 10;
+          const bHasIssue = bSeverity !== 10;
+
+          // Prioritize lines with issues
+          if (aHasIssue && !bHasIssue) return -1; // a comes before b
+          if (!aHasIssue && bHasIssue) return 1;  // b comes before a
+
+          // If both have issues or both have no issues, sort further
+          if (aHasIssue && bHasIssue) {
+            // Sort by severity (lower number = worse, so comes first)
+            return aSeverity - bSeverity;
+          } else { // Both have no issues (Good Service)
+            // Sort alphabetically by name
+            return a.name.localeCompare(b.name);
+          }
+        });
+
+        data.forEach(line => {
           const name = line.name || "Unknown line";
           const statusObj = line.lineStatuses?.[0];
           const status = statusObj?.statusSeverityDescription || "Status unknown";
           const reason = statusObj?.reason || "";
-          return `${name}: ${status}${reason ? " – " + reason : ""}`;
+          const severity = statusObj?.statusSeverity;
+
+          let sevClass = "low"; // Default to low (good service)
+          let emoji = "🟢"; // Default emoji for good service
+
+          if (severity !== undefined) {
+            if (severity === 10) { // Good Service
+              sevClass = "low";
+              emoji = "🟢";
+            } else if (severity === 0) { // Closed / No Service
+              sevClass = "high";
+              emoji = "🔴";
+            } else { // Delays / Part Suspended / Minor/Major etc.
+              sevClass = "medium";
+              emoji = "🟠";
+            }
+          }
+          
+          const d = document.createElement("div");
+          d.className = `item ${sevClass} tube-line-item`; // Add tube-line-item for potential specific styling
+          d.innerHTML = `
+            <strong>${emoji} ${name}:</strong> ${status}${reason ? " – " + reason : ""}
+          `;
+          container.appendChild(d);
         });
 
-        container.innerHTML = "<pre>" + lines.join("\n") + "</pre>";
       } catch (err) {
         container.textContent = "Error fetching Tube status: " + err.message;
         console.error(err);
@@ -218,7 +264,26 @@
           const name = line.name || label;
           const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
           const reason = line.lineStatuses?.[0]?.reason || "";
-          return `🚉 ${name}: ${status}${reason ? " – " + reason : ""}`;
+          // Determine severity class for other transport modes too if needed
+          const severity = line.lineStatuses?.[0]?.statusSeverity;
+          let emoji = "🚉"; // Default emoji for non-tube transport
+
+          // Apply similar logic for other transport if their severity codes align or need specific mapping
+          // For simplicity, keeping it general here or you can expand
+          if (severity !== undefined) {
+             if (severity === 10) { // Good Service
+               // No change to emoji, or use a specific "good" emoji
+             } else if (severity === 0) { // Closed / No Service
+               emoji = "🔴";
+             } else { // Delays / Part Suspended / Minor/Major etc.
+               emoji = "🟠";
+             }
+          }
+
+          // For river bus/ferry, the border color might not apply naturally if they don't have distinct statuses for high/medium/low
+          // If you want them to have borders based on severity, you'd need to add `item` and `sevClass` here too.
+          // For now, keeping original list format but updated emoji.
+          return `${emoji} ${name}: ${status}${reason ? " – " + reason : ""}`;
         });
 
         container.innerHTML = "<ul>" + messages.map(m => `<li>${m}</li>`).join("") + "</ul>";
@@ -236,3 +301,5 @@
     }
     updateTfL();
   </script>
+</body>
+</html>
