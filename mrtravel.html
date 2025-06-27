@@ -27,6 +27,18 @@
     .tube-line-item strong {
         margin-right: 0.5em;
     }
+    /* Style for TfL traffic - can be merged with .item if desired */
+    .tfl-traffic-item {
+      background: white;
+      padding: 1em;
+      margin-bottom: .8em;
+      border-left: 6px solid;
+      border-radius: 5px;
+      border-color: #001a57; /* A custom color for TfL traffic, or use existing severity colors */
+    }
+    .tfl-traffic-item.high { border-color: #e53935; }
+    .tfl-traffic-item.medium { border-color: #fb8c00; }
+    .tfl-traffic-item.low { border-color: #43a047; } /* Should be rare for disruptions */
   </style>
 </head>
 <body>
@@ -34,7 +46,8 @@
 
   <div class="section" id="traffic">
     <h2>🚦 Traffic Hotspots (All Incidents)</h2>
-    <div id="incidents">Loading traffic…</div>
+    <div id="incidents">Loading TomTom traffic…</div>
+    <div id="tfl-traffic-incidents" style="margin-top: 1.5em;">Loading TfL traffic…</div>
   </div>
 
   <div class="section" id="roadworks-today">
@@ -65,11 +78,21 @@
     // Refresh interval for all data fetches (5 minutes)
     const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
-    // Coordinates for Southeast London
-    const bbox = "51.51,-0.12,51.30,0.25"; // tlLat, tlLon, brLat, brLon
+    // Coordinates for Southeast London (tlLat, tlLon, brLat, brLon)
+    const bbox = {
+      tlLat: 51.51, tlLon: -0.12,
+      brLat: 51.30, brLon: 0.25
+    };
 
+    // Helper to check if coordinates are within the SE London bbox
+    function isWithinBbox(lat, lon) {
+      return lat <= bbox.tlLat && lat >= bbox.brLat &&
+             lon >= bbox.tlLon && lon <= bbox.brLon;
+    }
+
+    // --- TomTom Traffic Functions (unchanged) ---
     async function fetchTraffic() {
-      const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
+      const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox.tlLat},${bbox.tlLon},${bbox.brLat},${bbox.brLon}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
       try {
         const resp = await fetch(url);
         if (!resp.ok) {
@@ -79,8 +102,8 @@
         return data.incidents || [];
       } catch (error) {
         console.error("Error fetching TomTom traffic data:", error);
-        document.getElementById("incidents").textContent = "Error loading traffic incidents.";
-        document.getElementById("roadworks").textContent = "Error loading roadworks.";
+        document.getElementById("incidents").textContent = "Error loading TomTom traffic incidents.";
+        document.getElementById("roadworks").textContent = "Error loading TomTom roadworks.";
         return [];
       }
     }
@@ -96,7 +119,7 @@
     function renderTraffic(list) {
       const container = document.getElementById("incidents");
       container.innerHTML = "";
-      if (!list.length) return container.innerHTML = "<p>No traffic incidents reported.</p>";
+      if (!list.length) return container.innerHTML = "<p>No TomTom traffic incidents reported.</p>";
 
       list.sort((a, b) => b.severity - a.severity);
 
@@ -124,7 +147,7 @@
       const container = document.getElementById("roadworks");
       container.innerHTML = "";
       if (!list.length) {
-        container.innerHTML = "<p>No roadworks reported for today.</p>";
+        container.innerHTML = "<p>No TomTom roadworks reported for today.</p>";
         return;
       }
 
@@ -135,7 +158,7 @@
       );
 
       if (!todayRoadworks.length) {
-        container.innerHTML = "<p>No roadworks reported for today.</p>";
+        container.innerHTML = "<p>No TomTom roadworks reported for today.</p>";
         return;
       }
 
@@ -160,14 +183,95 @@
       });
     }
 
+    // --- NEW: TfL Traffic Functions ---
+    async function fetchTfLTraffic() {
+      const url = `https://api.tfl.gov.uk/Road/All/Disruption?app_key=${TFL_KEY}`;
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          throw new Error(`TfL Road Disruption API responded with status: ${resp.status} ${resp.statusText}`);
+        }
+        // TfL Road Disruption API returns JSON, not XML (despite London Datastore hinting at XML feed)
+        const data = await resp.json(); 
+
+        // Filter by bbox for South East London
+        const seLondonIncidents = data.roadDisruptions.filter(incident => {
+          // Check if point coordinates exist and are valid numbers
+          if (incident.point && !isNaN(parseFloat(incident.point.split(',')[0])) && !isNaN(parseFloat(incident.point.split(',')[1]))) {
+            const [lat, lon] = incident.point.split(',').map(Number);
+            return isWithinBbox(lat, lon);
+          }
+          return false; // Exclude incidents without valid coordinates
+        });
+        
+        return seLondonIncidents || [];
+      } catch (error) {
+        console.error("Error fetching TfL traffic data:", error);
+        document.getElementById("tfl-traffic-incidents").textContent = "Error loading TfL traffic incidents.";
+        return [];
+      }
+    }
+
+    function renderTfLTraffic(list) {
+        const container = document.getElementById("tfl-traffic-incidents");
+        container.innerHTML = "";
+        if (!list.length) {
+            return container.innerHTML = "<p>No TfL traffic incidents reported for SE London.</p>";
+        }
+
+        // Sort by severity (e.g., 'Major' first) or a custom ranking
+        // TfL 'severity' is often text (e.g., 'Major', 'Minor', 'Serious')
+        const severityOrder = { "Serious": 1, "Major": 2, "Minor": 3, "Moderate": 4, "Normal": 5, "Good": 6 };
+        list.sort((a, b) => {
+            const aSev = severityOrder[a.severity] || 99; // Default to low priority if severity unknown
+            const bSev = severityOrder[b.severity] || 99;
+            return aSev - bSev;
+        });
+
+        list.forEach(incident => {
+            const description = incident.comments || incident.location || "No description available";
+            const currentStatus = incident.currentStatus || "Status unknown";
+            const category = incident.category || "Incident";
+            const roadNames = incident.roadName || "Unnamed road";
+
+            let sevClass = "low"; // Default
+            let emoji = "🔵"; // Default for TfL, or specific based on severity
+            if (incident.severity === "Serious") {
+                sevClass = "high";
+                emoji = "🚨";
+            } else if (incident.severity === "Major" || incident.severity === "Minor") {
+                sevClass = "medium";
+                emoji = "🔶";
+            }
+
+            const d = document.createElement("div");
+            d.className = `item tfl-traffic-item ${sevClass}`; // Use tfl-traffic-item class
+            d.innerHTML = `
+                <strong>${emoji} ${roadNames}</strong> – 
+                <em>${category} (${currentStatus})</em><br>
+                ${description}
+                <br><small>Severity: ${incident.severity || 'Unknown'}</small>
+            `;
+            container.appendChild(d);
+        });
+    }
+
+    // --- Unified Traffic Update ---
     async function updateTraffic() {
-      const incidents = await fetchTraffic();
-      renderTraffic(incidents);
-      renderRoadworksToday(incidents);
+      // TomTom Traffic
+      const tomtomIncidents = await fetchTraffic();
+      renderTraffic(tomtomIncidents);
+      renderRoadworksToday(tomtomIncidents); // Roadworks still from TomTom
+
+      // TfL Traffic
+      const tflIncidents = await fetchTfLTraffic();
+      renderTfLTraffic(tflIncidents);
+
       setTimeout(updateTraffic, REFRESH_INTERVAL_MS);
     }
-    updateTraffic();
+    updateTraffic(); // Initial call to update all traffic data
 
+    // --- TfL Public Transport Functions (unchanged, except for tube info formatting) ---
     async function fetchTfLStatus(lines) {
       const url = `https://api.tfl.gov.uk/Line/${lines}/Status?app_key=${TFL_KEY}`;
       const res = await fetch(url);
@@ -177,7 +281,7 @@
 
     async function fetchAndRenderTubeStatus() {
       const container = document.getElementById("tube-status");
-      container.innerHTML = ''; // Clear previous content
+      container.innerHTML = ''; 
       try {
         const url = `https://api.tfl.gov.uk/Line/Mode/tube/Status?app_key=${TFL_KEY}`;
         const res = await fetch(url);
@@ -191,25 +295,19 @@
           return;
         }
 
-        // Sort lines: Issues first, then by severity, then alphabetically
         data.sort((a, b) => {
           const aSeverity = a.lineStatuses?.[0]?.statusSeverity;
           const bSeverity = b.lineStatuses?.[0]?.statusSeverity;
 
-          // '10' typically means 'Good Service'
-          const aHasIssue = aSeverity !== 10;
+          const aHasIssue = aSeverity !== 10; 
           const bHasIssue = bSeverity !== 10;
 
-          // Prioritize lines with issues
-          if (aHasIssue && !bHasIssue) return -1; // a comes before b
-          if (!aHasIssue && bHasIssue) return 1;  // b comes before a
+          if (aHasIssue && !bHasIssue) return -1; 
+          if (!aHasIssue && bHasIssue) return 1;  
 
-          // If both have issues or both have no issues, sort further
           if (aHasIssue && bHasIssue) {
-            // Sort by severity (lower number = worse, so comes first)
             return aSeverity - bSeverity;
-          } else { // Both have no issues (Good Service)
-            // Sort alphabetically by name
+          } else { 
             return a.name.localeCompare(b.name);
           }
         });
@@ -221,24 +319,24 @@
           const reason = statusObj?.reason || "";
           const severity = statusObj?.statusSeverity;
 
-          let sevClass = "low"; // Default to low (good service)
-          let emoji = "🟢"; // Default emoji for good service
+          let sevClass = "low"; 
+          let emoji = "🟢"; 
 
           if (severity !== undefined) {
-            if (severity === 10) { // Good Service
+            if (severity === 10) { 
               sevClass = "low";
               emoji = "🟢";
-            } else if (severity === 0) { // Closed / No Service
+            } else if (severity === 0) { 
               sevClass = "high";
               emoji = "🔴";
-            } else { // Delays / Part Suspended / Minor/Major etc.
+            } else { 
               sevClass = "medium";
               emoji = "🟠";
             }
           }
           
           const d = document.createElement("div");
-          d.className = `item ${sevClass} tube-line-item`; // Add tube-line-item for potential specific styling
+          d.className = `item ${sevClass} tube-line-item`; 
           d.innerHTML = `
             <strong>${emoji} ${name}:</strong> ${status}${reason ? " – " + reason : ""}
           `;
@@ -264,25 +362,17 @@
           const name = line.name || label;
           const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
           const reason = line.lineStatuses?.[0]?.reason || "";
-          // Determine severity class for other transport modes too if needed
           const severity = line.lineStatuses?.[0]?.statusSeverity;
-          let emoji = "🚉"; // Default emoji for non-tube transport
+          let emoji = "🚉"; 
 
-          // Apply similar logic for other transport if their severity codes align or need specific mapping
-          // For simplicity, keeping it general here or you can expand
           if (severity !== undefined) {
-             if (severity === 10) { // Good Service
-               // No change to emoji, or use a specific "good" emoji
-             } else if (severity === 0) { // Closed / No Service
+             if (severity === 0) { 
                emoji = "🔴";
-             } else { // Delays / Part Suspended / Minor/Major etc.
+             } else if (severity !== 10) { 
                emoji = "🟠";
              }
           }
 
-          // For river bus/ferry, the border color might not apply naturally if they don't have distinct statuses for high/medium/low
-          // If you want them to have borders based on severity, you'd need to add `item` and `sevClass` here too.
-          // For now, keeping original list format but updated emoji.
           return `${emoji} ${name}: ${status}${reason ? " – " + reason : ""}`;
         });
 
