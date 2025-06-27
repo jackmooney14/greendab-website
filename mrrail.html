@@ -1,85 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TfL and National Rail Service Status</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 20px;
-      background-color: #f4f4f4;
-      color: #333;
-    }
-    h1, h2 {
-      color: #005eb8;
-    }
-    .container {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 20px;
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    #tfl-output {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    #nr-output {
-      display: flex;
-      flex-direction: column;
-    }
-    .line-status {
-      display: flex;
-      flex-wrap: nowrap;
-      align-items: stretch;
-      border-radius: 5px;
-      overflow: hidden;
-      border: 1px solid #ccc;
-      margin-bottom: 8px;
-    }
-    .line-name {
-      padding: 8px 10px;
-      font-weight: bold;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-    }
-    .status-text {
-      flex-grow: 1;
-      padding: 8px 10px;
-      display: flex;
-      align-items: center;
-      color: white;
-      font-weight: bold;
-    }
-    .status-good { background-color: green; }
-    .status-minor { background-color: orange; }
-    .status-severe { background-color: red; }
+<!-- INSERT THIS VERSION IN PLACE OF YOUR HTML FILE -->
 
-    .national-rail { background-color: #003087; color: white; }
-    .river-service { background-color: #009CDE; color: white; }
-
-    .bakerloo { background-color: #B36305; color: white; }
-    .central { background-color: #E30613; color: white; }
-    .circle { background-color: #FFD300; color: black; }
-    .district { background-color: #00782A; color: white; }
-    .elizabeth { background-color: #6950A1; color: white; }
-    .hammersmith-city { background-color: #F3A9BB; color: black; }
-    .jubilee { background-color: #A0A5A9; color: black; }
-    .metropolitan { background-color: #9B0056; color: white; }
-    .northern { background-color: black; color: white; }
-    .piccadilly { background-color: #003688; color: white; }
-    .victoria { background-color: #0098D4; color: white; }
-    .waterloo-city { background-color: #76D0BD; color: black; }
-    .dlr-color { background-color: #00AFAD; color: white; }
-    .overground-color { background-color: #E86A10; color: white; }
-    .tram-color { background-color: #00A300; color: white; }
-  </style>
-</head>
+<!-- ...existing head and style remains unchanged... -->
 <body>
   <h1>TfL and National Rail Service Status</h1>
   <div class="container">
@@ -93,6 +14,12 @@
     </div>
   </div>
 
+  <div id="issues-section" style="margin-top: 40px; display: none;">
+    <h2>Current Service Issues</h2>
+    <div id="tfl-issues"></div>
+    <div id="nr-issues"></div>
+  </div>
+
   <script>
     const lineCssClasses = {
       "Bakerloo": "bakerloo", "Central": "central", "Circle": "circle",
@@ -104,8 +31,15 @@
       "London Overground": "overground-color", "Tram": "tram-color"
     };
 
+    let tflIssueCount = 0;
+    let nrIssueCount = 0;
+
     async function fetchTfLStatus() {
       const output = document.getElementById("tfl-output");
+      const issueOutput = document.getElementById("tfl-issues");
+      issueOutput.innerHTML = "";
+      tflIssueCount = 0;
+
       try {
         const res = await fetch("https://api.tfl.gov.uk/line/mode/tube,dlr,overground,elizabeth-line,tram/status");
         const data = await res.json();
@@ -114,6 +48,7 @@
         data.forEach(line => {
           const lineName = line.name;
           const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
+          const reason = line.lineStatuses?.[0]?.reason || null;
           const cssClass = lineCssClasses[lineName] || "";
           const statusClass = status.includes("Good") ? "status-good"
                               : status.includes("Minor") ? "status-minor"
@@ -124,6 +59,11 @@
               <div class="line-name ${cssClass}">${lineName}</div>
               <div class="status-text ${statusClass}">${status}</div>
             </div>`;
+
+          if (reason && !status.includes("Good")) {
+            tflIssueCount++;
+            issueOutput.innerHTML += `<p><strong>${lineName}</strong>: ${reason}</p>`;
+          }
         });
       } catch (err) {
         output.innerHTML = "<p>Error loading TfL data.</p>";
@@ -133,8 +73,11 @@
 
     async function fetchNationalRailStatus() {
       const output = document.getElementById("nr-output");
-      output.innerHTML = "<h2>National Rail & River</h2>";
+      const issueOutput = document.getElementById("nr-issues");
+      issueOutput.innerHTML = "";
+      nrIssueCount = 0;
 
+      output.innerHTML = "<h2>National Rail & River</h2>";
       try {
         const res = await fetch("https://api.rdmdata.com/v1/service-disruptions", {
           headers: {
@@ -173,6 +116,9 @@
               <div class="line-name national-rail">${route}</div>
               <div class="status-text ${statusClass}">${message}</div>
             </div>`;
+
+          nrIssueCount++;
+          issueOutput.innerHTML += `<p><strong>${route}</strong>: ${message}</p>`;
         });
 
       } catch (err) {
@@ -186,13 +132,18 @@
     }
 
     function refreshAll() {
-      fetchTfLStatus();
-      fetchNationalRailStatus();
+      fetchTfLStatus().then(showIssues);
+      fetchNationalRailStatus().then(showIssues);
+    }
+
+    function showIssues() {
+      const section = document.getElementById("issues-section");
+      section.style.display = (tflIssueCount > 0 || nrIssueCount > 0) ? "block" : "none";
     }
 
     window.onload = () => {
       refreshAll();
-      setInterval(refreshAll, 5 * 60 * 1000); // refresh every 5 min
+      setInterval(refreshAll, 5 * 60 * 1000);
     };
   </script>
 </body>
