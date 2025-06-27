@@ -103,16 +103,26 @@
     </div>
   </div>
 
+  <div class="section" id="rail-delays">
+      <h2>🚆 National Rail Delays (Southeastern & Thameslink)</h2>
+      <div id="national-rail-delays">Loading National Rail delays...</div>
+  </div>
+
   <script>
     const TOMTOM_KEY = "ZKntlBjAvEOBSRtfMsEdbo31b6UcmJHJ";
     const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
-    // --- YOUR OpenWeatherMap API Key ---
     const OPENWEATHER_KEY = "c43b3437c0f093ed56bdc93a115e26a2"; 
 
-    // Refresh interval for all data fetches (5 minutes)
+    // *** IMPORTANT: You MUST set up a backend proxy for National Rail Data ***
+    // This URL will point to YOUR custom API endpoint on your server
+    const NATIONAL_RAIL_API_PROXY_URL = "YOUR_NATIONAL_RAIL_API_PROXY_URL"; // Example: "https://yourserver.com/api/national-rail-delays"
+
+    // Refresh interval for most data fetches (5 minutes)
     const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
     // Weather refresh interval (2 hours)
-    const WEATHER_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; // 2 hours
+    const WEATHER_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; 
+    // National Rail refresh interval (e.g., every 2 minutes, as it's very live)
+    const RAIL_REFRESH_INTERVAL_MS = 2 * 60 * 1000;
 
     // Coordinates for Southeast London (tlLat, tlLon, brLat, brLon)
     const bbox = {
@@ -123,6 +133,24 @@
     const WEATHER_LAT = 51.48;
     const WEATHER_LON = 0.0;
 
+    // List of relevant SE London stations (CRS codes) for National Rail
+    const SE_LONDON_RAIL_STATIONS = [
+      "LBG", // London Bridge
+      "CHX", // Charing Cross
+      "WAE", // Waterloo East
+      "LEW", // Lewisham
+      "GRN", // Greenwich
+      "DFD", // Dartford
+      "BMS", // Bromley South
+      "ORP", // Orpington
+      "ECR", // East Croydon (major hub, many SE services)
+      "VIC"  // London Victoria (major terminal for Southeastern)
+      // Add more stations as needed, e.g., Abbey Wood (ABW), Woolwich Arsenal (WWA) etc.
+    ];
+
+    // TOC (Train Operating Company) codes for filtering
+    const TARGET_TOC_CODES = ["SE", "TL"]; // Southeastern (SE), Thameslink (TL)
+
     // Helper to check if coordinates are within the SE London bbox
     function isWithinBbox(lat, lon) {
       return lat <= bbox.tlLat && lat >= bbox.brLat &&
@@ -131,7 +159,6 @@
 
     // --- Weather Forecast Functions ---
     async function fetchWeather() {
-      // Reverted to 5-day / 3-hour forecast API (available on free tier without subscription plan)
       const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${WEATHER_LAT}&lon=${WEATHER_LON}&units=metric&appid=${OPENWEATHER_KEY}`;
       const container = document.getElementById("weather-forecast");
 
@@ -150,19 +177,18 @@
       } catch (error) {
         console.error("Error fetching weather data:", error);
         container.textContent = `Error loading weather: ${error.message}. Please check your API key and network connection.`;
-        return null; // Indicate failure
+        return null; 
       }
     }
 
     function renderWeather(weatherData) {
         const container = document.getElementById("weather-forecast");
         if (!weatherData) {
-            return; // Error message already set by fetchWeather
+            return; 
         }
 
-        // The /data/2.5/forecast API provides a 'list' of 3-hour forecasts
         const forecastList = weatherData.list;
-        const city = weatherData.city.name || "Southeast London"; // Get city name from response
+        const city = weatherData.city.name || "Southeast London"; 
 
         if (!forecastList || forecastList.length === 0) {
             container.textContent = "Weather forecast data incomplete. Please try again.";
@@ -172,83 +198,80 @@
         const now = new Date();
         const currentHour = now.getHours();
 
-        // Find today's and tomorrow's data by iterating the forecast list
-        // Assuming the first item is current or very near current
-        const currentWeather = forecastList[0];
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Today's date (midnight)
+        const currentWeather = forecastList[0]; 
+        
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); 
         const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
+        tomorrow.setDate(today.getDate() + 1); 
 
-        let todayMinTemp = currentWeather.main.temp;
-        let todayMaxTemp = currentWeather.main.temp;
+        let todayMinTemp = Infinity;
+        let todayMaxTemp = -Infinity;
         let tomorrowMinTemp = Infinity;
         let tomorrowMaxTemp = -Infinity;
-        let tomorrowDescription = "unclear skies"; // Default description for tomorrow
+        let tomorrowDescription = "unclear skies"; 
 
         let isTomorrowSet = false;
 
         forecastList.forEach(item => {
-            const itemDate = new Date(item.dt * 1000); // Convert Unix timestamp to Date object
+            const itemDate = new Date(item.dt * 1000); 
             const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
 
-            // If it's today's forecast
-            if (itemDay.getTime() === today.getTime()) {
+            if (itemDay.getTime() === today.getTime()) { 
                 todayMinTemp = Math.min(todayMinTemp, item.main.temp_min);
                 todayMaxTemp = Math.max(todayMaxTemp, item.main.temp_max);
-            }
-            // If it's tomorrow's forecast and we haven't seen it yet
-            else if (itemDay.getTime() === tomorrow.getTime() && !isTomorrowSet) {
+            } else if (itemDay.getTime() === tomorrow.getTime()) { 
                 tomorrowMinTemp = Math.min(tomorrowMinTemp, item.main.temp_min);
                 tomorrowMaxTemp = Math.max(tomorrowMaxTemp, item.main.temp_max);
-                tomorrowDescription = item.weather[0].description; // Take the first description from tomorrow
-                isTomorrowSet = true; // Set flag to only pick description once
+                if (!isTomorrowSet) { // Get a representative description for tomorrow (e.g., from an early forecast)
+                    tomorrowDescription = item.weather[0].description;
+                    isTomorrowSet = true; 
+                }
             }
         });
+        
+        if (todayMinTemp === Infinity) todayMinTemp = currentWeather.main.temp_min;
+        if (todayMaxTemp === -Infinity) todayMaxTemp = currentWeather.main.temp_max;
+        if (tomorrowMinTemp === Infinity) tomorrowMinTemp = todayMinTemp; 
+        if (tomorrowMaxTemp === -Infinity) tomorrowMaxTemp = todayMaxTemp; 
 
-        // Current conditions
         const currentDescription = currentWeather.weather[0].description;
         const currentTemp = Math.round(currentWeather.main.temp);
         const feelsLike = Math.round(currentWeather.main.feels_like);
-        
-        // Ensure temps are rounded
-        todayMinTemp = Math.round(todayMinTemp);
-        todayMaxTemp = Math.round(todayMaxTemp);
-        tomorrowMinTemp = Math.round(tomorrowMinTemp === Infinity ? 0 : tomorrowMinTemp); // Handle case if tomorrow data not available
-        tomorrowMaxTemp = Math.round(tomorrowMaxTemp === -Infinity ? 0 : tomorrowMaxTemp);
+        const roundedTodayHigh = Math.round(todayMaxTemp);
+        const roundedTodayLow = Math.round(todayMinTemp);
+        const roundedTomorrowHigh = Math.round(tomorrowMaxTemp);
+        const roundedTomorrowLow = Math.round(tomorrowMinTemp);
 
 
         let greeting = "Hello";
         let detailedForecast = "";
 
-        // Determine time of day and build message
-        if (currentHour >= 5 && currentHour < 12) { // Morning (5 AM to 11:59 AM)
+        if (currentHour >= 5 && currentHour < 12) { 
             greeting = "Good morning";
-            detailedForecast = `Currently in ${city}, it's ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. For today, expect a high of ${todayMaxTemp}°C and a low of ${todayMinTemp}°C.`;
-        } else if (currentHour >= 12 && currentHour < 18) { // Afternoon (12 PM to 5:59 PM)
+            detailedForecast = `Currently in ${city}, it's ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. For today, expect a high of ${roundedTodayHigh}°C and a low of ${roundedTodayLow}°C.`;
+        } else if (currentHour >= 12 && currentHour < 18) { 
             greeting = "Good afternoon";
-            detailedForecast = `The weather in ${city} is currently ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. Temperatures will reach around ${todayMaxTemp}°C this afternoon.`;
+            detailedForecast = `The weather in ${city} is currently ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. Temperatures will reach around ${roundedTodayHigh}°C this afternoon.`;
             
-            // For tonight's low, get the minimum from remaining today's forecasts or just use todayMinTemp
             let tonightLow = todayMinTemp; 
-            for(let i=1; i < forecastList.length; i++) { // Start from next forecast entry
+            for(let i=1; i < forecastList.length; i++) { 
                 const item = forecastList[i];
                 const itemDate = new Date(item.dt * 1000);
                 const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
                 if (itemDay.getTime() === today.getTime() && itemDate.getHours() >= currentHour) {
                     tonightLow = Math.min(tonightLow, item.main.temp_min);
                 } else if (itemDay.getTime() > today.getTime()) {
-                    // Stop once we go past today
                     break;
                 }
             }
             tonightLow = Math.round(tonightLow);
             detailedForecast += ` Tonight, the low will be around ${tonightLow}°C.`;
 
-        } else if (currentHour >= 18 && currentHour < 22) { // Evening (6 PM to 9:59 PM)
+        } else if (currentHour >= 18 && currentHour < 22) { 
             greeting = "Good evening";
             detailedForecast = `It's currently ${currentDescription} in ${city} at ${currentTemp}°C, feeling like ${feelsLike}°C.`;
             
-            let overnightLow = todayMinTemp; // Will capture the low for the rest of today/tonight
+            let overnightLow = todayMinTemp; 
             for(let i=1; i < forecastList.length; i++) {
                 const item = forecastList[i];
                 const itemDate = new Date(item.dt * 1000);
@@ -260,9 +283,9 @@
                 }
             }
             overnightLow = Math.round(overnightLow);
-            detailedForecast += ` Overnight, temperatures are set to drop to around ${overnightLow}°C. Looking ahead to tomorrow, expect a high of ${tomorrowMaxTemp}°C with ${tomorrowDescription}.`;
+            detailedForecast += ` Overnight, temperatures are set to drop to around ${overnightLow}°C. Looking ahead to tomorrow, expect a high of ${roundedTomorrowHigh}°C with ${tomorrowDescription}.`;
 
-        } else { // Night (10 PM to 4:59 AM)
+        } else { 
             greeting = "Good night";
             detailedForecast = `The current temperature in ${city} is ${currentTemp}°C, feeling like ${feelsLike}°C, with ${currentDescription}.`;
             
@@ -278,7 +301,7 @@
                 }
             }
             overnightLow = Math.round(overnightLow);
-            detailedForecast += ` Overnight, temperatures will fall to about ${overnightLow}°C. Looking ahead to tomorrow, expect a high of ${tomorrowMaxTemp}°C and a low of ${tomorrowMinTemp}°C, with ${tomorrowDescription}.`;
+            detailedForecast += ` Overnight, temperatures will fall to about ${overnightLow}°C. Looking ahead to tomorrow, expect a high of ${roundedTomorrowHigh}°C and a low of ${roundedTomorrowLow}°C, with ${tomorrowDescription}.`;
         }
 
         container.innerHTML = `<strong>${greeting}!</strong> ${detailedForecast}`;
@@ -609,6 +632,77 @@
       }
     }
 
+    // --- National Rail Functions ---
+    async function fetchNationalRailDelays() {
+        const container = document.getElementById("national-rail-delays");
+        if (NATIONAL_RAIL_API_PROXY_URL === "YOUR_NATIONAL_RAIL_API_PROXY_URL") {
+            container.textContent = "National Rail data requires a backend proxy URL to be configured.";
+            console.warn("NATIONAL_RAIL_API_PROXY_URL is not set. Please configure your backend proxy URL.");
+            return [];
+        }
+
+        try {
+            // Pass stations and TOC codes to your backend proxy
+            // Your proxy will use these to query Darwin and filter results.
+            const params = new URLSearchParams({
+                stations: SE_LONDON_RAIL_STATIONS.join(','),
+                tocs: TARGET_TOC_CODES.join(',') // Sending the desired TOCs to the proxy
+            });
+            const url = `${NATIONAL_RAIL_API_PROXY_URL}?${params.toString()}`;
+            
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                const errorBody = await resp.text();
+                throw new Error(`National Rail Proxy error: ${resp.status} ${resp.statusText}. Response: ${errorBody}`);
+            }
+            const data = await resp.json();
+            // Assuming your proxy returns a JSON array of delayed services
+            // that are already filtered by the requested stations AND TOCs.
+            return data; 
+        } catch (error) {
+            console.error("Error fetching National Rail data:", error);
+            container.textContent = "Error loading National Rail delays.";
+            return [];
+        }
+    }
+
+    function renderNationalRailDelays(list) {
+        const container = document.getElementById("national-rail-delays");
+        container.innerHTML = ""; 
+
+        if (!list.length) {
+            container.innerHTML = "<p>No significant Southeastern or Thameslink delays reported for selected stations.</p>";
+            return;
+        }
+
+        list.sort((a, b) => {
+            if (a.status === "Cancelled" && b.status !== "Cancelled") return -1;
+            if (a.status !== "Cancelled" && b.status === "Cancelled") return 1;
+            return (a.expected || a.scheduled).localeCompare(b.expected || b.scheduled); 
+        });
+
+        list.forEach(delay => {
+            let sevClass = "low";
+            let emoji = "✅"; 
+            if (delay.status === "Cancelled") {
+                sevClass = "high";
+                emoji = "❌";
+            } else if (delay.status === "Delayed") {
+                sevClass = "medium";
+                emoji = "⚠️";
+            }
+
+            const d = document.createElement("div");
+            d.className = `item ${sevClass}`; 
+            d.innerHTML = `
+            <strong>${emoji} ${delay.station} to ${delay.destination}</strong><br>
+            Scheduled: ${delay.scheduled}, Expected: ${delay.expected} (Platform: ${delay.platform || 'TBC'})<br>
+            Status: <em>${delay.status}</em>${delay.delayReason ? ' - ' + delay.delayReason : ''}
+            `;
+            container.appendChild(d);
+        });
+    }
+
     // --- Main Update Functions ---
     async function updateTraffic() {
       // TomTom Traffic
@@ -624,7 +718,7 @@
       setTimeout(updateTraffic, REFRESH_INTERVAL_MS);
     }
     
-    async function updateTfL() { // This function handles public transport updates
+    async function updateTfL() { 
       await fetchAndRenderTubeStatus();
       await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus");
       await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry");
@@ -637,10 +731,17 @@
         setTimeout(updateWeatherForecast, WEATHER_REFRESH_INTERVAL_MS);
     }
 
+    async function updateNationalRail() {
+        const railDelays = await fetchNationalRailDelays();
+        renderNationalRailDelays(railDelays);
+        setTimeout(updateNationalRail, RAIL_REFRESH_INTERVAL_MS);
+    }
+
     // Initial calls for all data
     updateWeatherForecast();
     updateTraffic();
     updateTfL();
+    updateNationalRail(); // Start fetching National Rail data
   </script>
 </body>
 </html>
