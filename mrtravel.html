@@ -131,9 +131,8 @@
 
     // --- Weather Forecast Functions ---
     async function fetchWeather() {
-      // OpenWeatherMap One Call API 3.0
-      // Exclude minutely and alerts. Hourly and daily are needed for dynamic text.
-      const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${WEATHER_LAT}&lon=${WEATHER_LON}&exclude=minutely,alerts&units=metric&appid=${OPENWEATHER_KEY}`;
+      // Reverted to 5-day / 3-hour forecast API (available on free tier without subscription plan)
+      const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${WEATHER_LAT}&lon=${WEATHER_LON}&units=metric&appid=${OPENWEATHER_KEY}`;
       const container = document.getElementById("weather-forecast");
 
       try {
@@ -161,58 +160,125 @@
             return; // Error message already set by fetchWeather
         }
 
-        const current = weatherData.current;
-        const todayForecast = weatherData.daily[0]; // Today's daily forecast
-        const tomorrowForecast = weatherData.daily[1]; // Tomorrow's daily forecast (for evening/night forecast)
-        // const hourlyForecast = weatherData.hourly; // Use if more granular hourly descriptions are needed
+        // The /data/2.5/forecast API provides a 'list' of 3-hour forecasts
+        const forecastList = weatherData.list;
+        const city = weatherData.city.name || "Southeast London"; // Get city name from response
 
-        if (!current || !todayForecast || !tomorrowForecast) { // Removed hourly from this check as it's not always critical for the main message
-            container.textContent = "Weather data incomplete. Please try again.";
+        if (!forecastList || forecastList.length === 0) {
+            container.textContent = "Weather forecast data incomplete. Please try again.";
             return;
         }
 
         const now = new Date();
         const currentHour = now.getHours();
+
+        // Find today's and tomorrow's data by iterating the forecast list
+        // Assuming the first item is current or very near current
+        const currentWeather = forecastList[0];
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Today's date (midnight)
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        let todayMinTemp = currentWeather.main.temp;
+        let todayMaxTemp = currentWeather.main.temp;
+        let tomorrowMinTemp = Infinity;
+        let tomorrowMaxTemp = -Infinity;
+        let tomorrowDescription = "unclear skies"; // Default description for tomorrow
+
+        let isTomorrowSet = false;
+
+        forecastList.forEach(item => {
+            const itemDate = new Date(item.dt * 1000); // Convert Unix timestamp to Date object
+            const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+
+            // If it's today's forecast
+            if (itemDay.getTime() === today.getTime()) {
+                todayMinTemp = Math.min(todayMinTemp, item.main.temp_min);
+                todayMaxTemp = Math.max(todayMaxTemp, item.main.temp_max);
+            }
+            // If it's tomorrow's forecast and we haven't seen it yet
+            else if (itemDay.getTime() === tomorrow.getTime() && !isTomorrowSet) {
+                tomorrowMinTemp = Math.min(tomorrowMinTemp, item.main.temp_min);
+                tomorrowMaxTemp = Math.max(tomorrowMaxTemp, item.main.temp_max);
+                tomorrowDescription = item.weather[0].description; // Take the first description from tomorrow
+                isTomorrowSet = true; // Set flag to only pick description once
+            }
+        });
+
+        // Current conditions
+        const currentDescription = currentWeather.weather[0].description;
+        const currentTemp = Math.round(currentWeather.main.temp);
+        const feelsLike = Math.round(currentWeather.main.feels_like);
         
+        // Ensure temps are rounded
+        todayMinTemp = Math.round(todayMinTemp);
+        todayMaxTemp = Math.round(todayMaxTemp);
+        tomorrowMinTemp = Math.round(tomorrowMinTemp === Infinity ? 0 : tomorrowMinTemp); // Handle case if tomorrow data not available
+        tomorrowMaxTemp = Math.round(tomorrowMaxTemp === -Infinity ? 0 : tomorrowMaxTemp);
+
+
         let greeting = "Hello";
         let detailedForecast = "";
-
-        const currentDescription = current.weather[0].description;
-        const currentTemp = Math.round(current.temp);
-        const feelsLike = Math.round(current.feels_like);
-        const todayHigh = Math.round(todayForecast.temp.max);
-        const todayLow = Math.round(todayForecast.temp.min);
-        const tomorrowHigh = Math.round(tomorrowForecast.temp.max);
-        const tomorrowLow = Math.round(tomorrowForecast.temp.min);
 
         // Determine time of day and build message
         if (currentHour >= 5 && currentHour < 12) { // Morning (5 AM to 11:59 AM)
             greeting = "Good morning";
-            detailedForecast = `Currently, it's ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. For today, expect a high of ${todayHigh}°C and a low of ${todayLow}°C.`;
+            detailedForecast = `Currently in ${city}, it's ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. For today, expect a high of ${todayMaxTemp}°C and a low of ${todayMinTemp}°C.`;
         } else if (currentHour >= 12 && currentHour < 18) { // Afternoon (12 PM to 5:59 PM)
             greeting = "Good afternoon";
-            detailedForecast = `The weather in Southeast London is currently ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. Temperatures will reach around ${todayHigh}°C this afternoon.`;
+            detailedForecast = `The weather in ${city} is currently ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C. Temperatures will reach around ${todayMaxTemp}°C this afternoon.`;
             
-            // Get tonight's forecasted low and description from today's daily forecast (night temp)
-            const tonightLow = Math.round(todayForecast.temp.night || todayForecast.temp.min); 
-            const tonightDescription = todayForecast.weather[0].description; // Often general for the daily period
-            detailedForecast += ` Tonight, the low will be around ${tonightLow}°C, with ${tonightDescription}.`;
+            // For tonight's low, get the minimum from remaining today's forecasts or just use todayMinTemp
+            let tonightLow = todayMinTemp; 
+            for(let i=1; i < forecastList.length; i++) { // Start from next forecast entry
+                const item = forecastList[i];
+                const itemDate = new Date(item.dt * 1000);
+                const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+                if (itemDay.getTime() === today.getTime() && itemDate.getHours() >= currentHour) {
+                    tonightLow = Math.min(tonightLow, item.main.temp_min);
+                } else if (itemDay.getTime() > today.getTime()) {
+                    // Stop once we go past today
+                    break;
+                }
+            }
+            tonightLow = Math.round(tonightLow);
+            detailedForecast += ` Tonight, the low will be around ${tonightLow}°C.`;
 
         } else if (currentHour >= 18 && currentHour < 22) { // Evening (6 PM to 9:59 PM)
             greeting = "Good evening";
-            detailedForecast = `It's currently ${currentDescription} in Southeast London at ${currentTemp}°C, feeling like ${feelsLike}°C.`;
+            detailedForecast = `It's currently ${currentDescription} in ${city} at ${currentTemp}°C, feeling like ${feelsLike}°C.`;
             
-            const tonightLow = Math.round(todayForecast.temp.night || todayForecast.temp.min);
-            const tonightDescription = todayForecast.weather[0].description; 
-            detailedForecast += ` Overnight, temperatures are set to drop to around ${tonightLow}°C, with ${tonightDescription}. Looking ahead to tomorrow, expect a high of ${tomorrowHigh}°C.`;
+            let overnightLow = todayMinTemp; // Will capture the low for the rest of today/tonight
+            for(let i=1; i < forecastList.length; i++) {
+                const item = forecastList[i];
+                const itemDate = new Date(item.dt * 1000);
+                const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+                if (itemDay.getTime() === today.getTime() && itemDate.getHours() >= currentHour) {
+                    overnightLow = Math.min(overnightLow, item.main.temp_min);
+                } else if (itemDay.getTime() > today.getTime()) {
+                    break;
+                }
+            }
+            overnightLow = Math.round(overnightLow);
+            detailedForecast += ` Overnight, temperatures are set to drop to around ${overnightLow}°C. Looking ahead to tomorrow, expect a high of ${tomorrowMaxTemp}°C with ${tomorrowDescription}.`;
 
         } else { // Night (10 PM to 4:59 AM)
             greeting = "Good night";
-            detailedForecast = `The current temperature in Southeast London is ${currentTemp}°C, feeling like ${feelsLike}°C, with ${currentDescription}.`;
+            detailedForecast = `The current temperature in ${city} is ${currentTemp}°C, feeling like ${feelsLike}°C, with ${currentDescription}.`;
             
-            const overnightLow = Math.round(todayForecast.temp.night || todayForecast.temp.min); // Still today's night low
-            const tomorrowDescription = tomorrowForecast.weather[0].description;
-            detailedForecast += ` Overnight, temperatures will fall to about ${overnightLow}°C. Looking ahead to tomorrow, expect a high of ${tomorrowHigh}°C and a low of ${tomorrowLow}°C, with ${tomorrowDescription}.`;
+            let overnightLow = todayMinTemp; 
+            for(let i=1; i < forecastList.length; i++) {
+                const item = forecastList[i];
+                const itemDate = new Date(item.dt * 1000);
+                const itemDay = new Date(itemDate.getFullYear(), itemDate.getMonth(), itemDate.getDate());
+                if (itemDay.getTime() === today.getTime() && itemDate.getHours() >= currentHour) {
+                    overnightLow = Math.min(overnightLow, item.main.temp_min);
+                } else if (itemDay.getTime() > today.getTime()) {
+                    break;
+                }
+            }
+            overnightLow = Math.round(overnightLow);
+            detailedForecast += ` Overnight, temperatures will fall to about ${overnightLow}°C. Looking ahead to tomorrow, expect a high of ${tomorrowMaxTemp}°C and a low of ${tomorrowMinTemp}°C, with ${tomorrowDescription}.`;
         }
 
         container.innerHTML = `<strong>${greeting}!</strong> ${detailedForecast}`;
