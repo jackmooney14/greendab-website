@@ -23,8 +23,13 @@
   <h1>SE London Presenter Dashboard</h1>
 
   <div class="section" id="traffic">
-    <h2>🚦 Traffic Hotspots</h2>
+    <h2>🚦 Traffic Hotspots (All Incidents)</h2>
     <div id="incidents">Loading traffic…</div>
+  </div>
+
+  <div class="section" id="roadworks-today">
+    <h2>🛠 Today's Roadworks</h2>
+    <div id="roadworks">Loading roadworks…</div>
   </div>
 
   <div class="section" id="transport">
@@ -35,44 +40,103 @@
   </div>
 
   <script>
-    // 🔑 API keys
     const TOMTOM_KEY = "ZKntlBjAvEOBSRtfMsEdbo31b6UcmJHJ";
     const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
 
-    // 🧭 Bounding box (Lewisham to Dartford, M25 J5–31)
     const bbox = { tl: "51.520,0.00", br: "51.30,0.42" };
 
-    // 🚦 Traffic Data (TomTom)
     async function fetchTraffic() {
       const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox.tl},${bbox.br}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
       const resp = await fetch(url).then(r => r.json());
       return resp.incidents || [];
     }
 
+    // Helper: check if an event occurs today
+    function isEventToday(event) {
+      if (!event || !event.startTime || !event.endTime) return false;
+      const now = new Date();
+      const start = new Date(event.startTime);
+      const end = new Date(event.endTime);
+      return start <= now && now <= end && 
+        start.toDateString() === now.toDateString();
+    }
+
+    // Render all incidents
     function renderTraffic(list) {
       const container = document.getElementById("incidents");
       container.innerHTML = "";
       if (!list.length) return container.innerHTML = "<p>No traffic incidents reported.</p>";
+
       list.sort((a, b) => b.severity - a.severity);
+
       list.forEach(i => {
         const sev = i.severity >= 4 ? "high" : i.severity >= 2 ? "medium" : "low";
         const emoji = sev === "high" ? "🔴" : sev === "medium" ? "🟠" : "🟢";
-        const roads = i.roadNumbers?.join(", ") || "Unnamed";
-        const desc = i.events?.[0]?.description || "Incident reported";
+
+        const type = i.type?.replaceAll("_", " ").toLowerCase() || "incident";
+        const roads = i.roadNumbers?.join(", ") || "Unnamed road";
+        const desc = i.events?.[0]?.description || "No description available";
+
         const d = document.createElement("div");
         d.className = `item ${sev}`;
-        d.innerHTML = `<strong>${emoji} ${roads}</strong> – ${desc} (Severity: ${i.severity})`;
+        d.innerHTML = `
+          <strong>${emoji} ${roads}</strong> – 
+          <em>${type}</em><br>
+          ${desc} 
+          <br><small>Severity: ${i.severity}</small>
+        `;
+        container.appendChild(d);
+      });
+    }
+
+    // Render today's roadworks only
+    function renderRoadworksToday(list) {
+      const container = document.getElementById("roadworks");
+      container.innerHTML = "";
+      if (!list.length) return container.innerHTML = "<p>No roadworks reported for today.</p>";
+
+      // Filter by roadworks types & occurring today
+      const roadworksTypes = ["ROAD_WORK", "CONSTRUCTION", "MAINTENANCE"];
+      const todayRoadworks = list.filter(i => 
+        roadworksTypes.includes(i.type) &&
+        i.events?.some(isEventToday)
+      );
+
+      if (!todayRoadworks.length) {
+        container.innerHTML = "<p>No roadworks reported for today.</p>";
+        return;
+      }
+
+      todayRoadworks.sort((a, b) => b.severity - a.severity);
+
+      todayRoadworks.forEach(i => {
+        const sev = i.severity >= 4 ? "high" : i.severity >= 2 ? "medium" : "low";
+        const emoji = sev === "high" ? "🔴" : sev === "medium" ? "🟠" : "🟢";
+
+        const roads = i.roadNumbers?.join(", ") || "Unnamed road";
+        const desc = i.events?.[0]?.description || "No description available";
+
+        const d = document.createElement("div");
+        d.className = `item ${sev}`;
+        d.innerHTML = `
+          <strong>${emoji} ${roads}</strong> – 
+          <em>roadwork</em><br>
+          ${desc} 
+          <br><small>Severity: ${i.severity}</small>
+        `;
         container.appendChild(d);
       });
     }
 
     async function updateTraffic() {
-      renderTraffic(await fetchTraffic());
-      setTimeout(updateTraffic, 5 * 60 * 1000); // 5 min refresh
+      const incidents = await fetchTraffic();
+      renderTraffic(incidents);
+      renderRoadworksToday(incidents);
+      setTimeout(updateTraffic, 5 * 60 * 1000);
     }
     updateTraffic();
 
-    // 🚇 TfL Transport Status
+    // TfL transport status code (same as before)
     const tflBase = "https://api.tfl.gov.uk/Line";
     const keyParam = `app_key=${TFL_KEY}`;
 
@@ -114,9 +178,8 @@
         console.error("TfL Error:", err);
       }
 
-      setTimeout(updateTfL, 5 * 60 * 1000); // refresh
+      setTimeout(updateTfL, 5 * 60 * 1000);
     }
-
     updateTfL();
   </script>
 </body>
