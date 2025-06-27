@@ -73,16 +73,16 @@
 
   <div class="section" id="traffic">
     <h2>🚦 Traffic Hotspots (All Incidents)</h2>
-    <h3>From TomTom</h3>
-    <div id="incidents">Loading TomTom traffic…</div>
+    <h3>From HERE Traffic</h3>
+    <div id="incidents">Loading HERE traffic…</div>
     <h3>From TfL Road Network</h3>
     <div id="tfl-traffic-incidents" style="margin-top: 1.5em;">Loading TfL traffic…</div>
   </div>
 
   <div class="section" id="roadworks-today">
     <h2>🛠 Today's Roadworks</h2>
-    <h3>From TomTom</h3>
-    <div id="roadworks">Loading TomTom roadworks…</div>
+    <h3>From HERE Traffic</h3>
+    <div id="roadworks">Loading HERE roadworks…</div>
     <h3>From TfL Road Network</h3>
     <div id="tfl-roadworks-incidents" style="margin-top: 1.5em;">Loading TfL roadworks…</div>
   </div>
@@ -90,8 +90,8 @@
   <div class="section" id="transport">
     <h2>🚇 Public Transport Status</h2>
     <div>
-      <h3>Tube, Elizabeth & Overground Status</h3>
-      <div id="tube-status">Loading Tube, Elizabeth & Overground status…</div>
+      <h3>Tube, Elizabeth, Overground & National Rail Services</h3>
+      <div id="public-transport-status">Loading public transport status...</div>
     </div>
     <div>
       <h3>River Bus</h3>
@@ -103,13 +103,8 @@
     </div>
   </div>
 
-  <div class="section" id="rail-delays">
-      <h2>🚆 National Rail Delays (Southeastern & Thameslink)</h2>
-      <div id="national-rail-delays">Loading National Rail delays...</div>
-  </div>
-
   <script>
-    const TOMTOM_KEY = "ZKntlBjAvEOBSRtfMsEdbo31b6UcmJHJ";
+    const HERE_KEY = "k0PsupgE69Ez6BBh1sq59928cQ6Py7RLLtEvirAjz-o"; // Replaced TOMTOM_KEY with HERE_KEY
     const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
     const OPENWEATHER_KEY = "c43b3437c0f093ed56bdc93a115e26a2"; 
 
@@ -122,7 +117,7 @@
     // Weather refresh interval (2 hours)
     const WEATHER_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; 
     // National Rail refresh interval (e.g., every 2 minutes, as it's very live)
-    const RAIL_REFRESH_INTERVAL_MS = 2 * 60 * 1000;
+    const RAIL_REFRESH_INTERVAL_MS = 2 * 60 * 1000; 
 
     // Coordinates for Southeast London (tlLat, tlLon, brLat, brLon)
     const bbox = {
@@ -307,46 +302,59 @@
         container.innerHTML = `<strong>${greeting}!</strong> ${detailedForecast}`;
     }
 
-    // --- TomTom Traffic Functions ---
+    // --- HERE Traffic Functions (Replaced TomTom) ---
     async function fetchTraffic() {
-      const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox.tlLat},${bbox.tlLon},${bbox.brLat},${bbox.brLon}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
+      // HERE Traffic API bbox format: southLat,westLon;northLat,eastLon
+      const hereBbox = `${bbox.brLat},${bbox.tlLon};${bbox.tlLat},${bbox.brLon}`;
+      const url = `https://traffic.api.here.com/v7/incidents?apiKey=${HERE_KEY}&bbox=${hereBbox}&timeResolution=day`; // timeResolution can optimize payload
+      
       try {
         const resp = await fetch(url);
         if (!resp.ok) {
-          throw new Error(`TomTom API responded with status: ${resp.status} ${resp.statusText}`);
+          throw new Error(`HERE Traffic API responded with status: ${resp.status} ${resp.statusText}`);
         }
         const data = await resp.json();
-        return data.incidents || [];
+        // HERE API returns incidents in a 'results' array within 'response' or directly under 'incidents' depending on endpoint
+        return data.incidents || []; // Adjust based on actual HERE response structure if different
       } catch (error) {
-        console.error("Error fetching TomTom traffic data:", error);
-        document.getElementById("incidents").textContent = "Error loading TomTom traffic incidents.";
-        document.getElementById("roadworks").textContent = "Error loading TomTom roadworks.";
+        console.error("Error fetching HERE traffic data:", error);
+        document.getElementById("incidents").textContent = "Error loading HERE traffic incidents.";
+        document.getElementById("roadworks").textContent = "Error loading HERE roadworks.";
         return [];
       }
-    }
-
-    function isEventToday(event) {
-      if (!event || !event.startTime || !event.endTime) return false;
-      const now = new Date();
-      const start = new Date(event.startTime);
-      const end = new Date(event.endTime);
-      return start <= now && now <= end && start.toDateString() === now.toDateString();
     }
 
     function renderTraffic(list) {
       const container = document.getElementById("incidents");
       container.innerHTML = "";
-      if (!list.length) return container.innerHTML = "<p>No TomTom traffic incidents reported.</p>";
+      if (!list.length) return container.innerHTML = "<p>No HERE traffic incidents reported.</p>";
 
-      list.sort((a, b) => b.severity - a.severity);
+      // Sort by criticality (critical, major, minor)
+      const criticalityOrder = { "critical": 1, "major": 2, "minor": 3, "low": 4 };
+      list.sort((a, b) => {
+          const aCrit = criticalityOrder[a.criticality] || 99;
+          const bCrit = criticalityOrder[b.criticality] || 99;
+          return aCrit - bCrit;
+      });
 
       list.forEach(i => {
-        const sev = i.severity >= 4 ? "high" : i.severity >= 2 ? "medium" : "low";
-        const emoji = sev === "high" ? "🔴" : sev === "medium" ? "🟠" : "🟢";
+        let sev = "low"; // Default to low
+        let emoji = "🟢"; // Default emoji
+
+        // Map HERE criticality to existing severity classes
+        if (i.criticality === "critical") {
+            sev = "high";
+            emoji = "🔴";
+        } else if (i.criticality === "major") {
+            sev = "medium";
+            emoji = "🟠";
+        }
+        // No specific emoji change for minor/low, remains default green
 
         const type = i.type?.replaceAll("_", " ").toLowerCase() || "incident";
-        const roads = i.roadNumbers?.join(", ") || "Unnamed road";
-        const desc = i.events?.[0]?.description || "No description available";
+        // HERE API often provides description directly, no road numbers easily available directly in basic incident
+        const desc = i.description || "No description available"; 
+        const roads = i.roadNames?.join(", ") || "Affected roads unclear"; // HERE might have 'roadNames' array or just in description
 
         const d = document.createElement("div");
         d.className = `item ${sev}`;
@@ -354,7 +362,7 @@
           <strong>${emoji} ${roads}</strong> – 
           <em>${type}</em><br>
           ${desc} 
-          <br><small>Severity: ${i.severity}</small>
+          <br><small>Criticality: ${i.criticality || 'Unknown'}</small>
         `;
         container.appendChild(d);
       });
@@ -363,38 +371,43 @@
     function renderRoadworksToday(list) {
       const container = document.getElementById("roadworks");
       container.innerHTML = "";
-      if (!list.length) {
-        container.innerHTML = "<p>No TomTom roadworks reported for today.</p>";
-        return;
-      }
-
-      const roadworksTypes = ["ROAD_WORK", "CONSTRUCTION", "MAINTENANCE"];
-      const todayRoadworks = list.filter(i =>
-        roadworksTypes.includes(i.type) &&
-        i.events?.some(isEventToday)
-      );
+      
+      // Filter for actual road works incidents from the HERE list
+      const todayRoadworks = list.filter(i => i.type === 'roadWorks');
 
       if (!todayRoadworks.length) {
-        container.innerHTML = "<p>No TomTom roadworks reported for today.</p>";
+        container.innerHTML = "<p>No HERE roadworks reported for today.</p>";
         return;
       }
 
-      todayRoadworks.sort((a, b) => b.severity - a.severity);
+      // Sort roadworks by criticality
+      const criticalityOrder = { "critical": 1, "major": 2, "minor": 3, "low": 4 };
+      todayRoadworks.sort((a, b) => {
+          const aCrit = criticalityOrder[a.criticality] || 99;
+          const bCrit = criticalityOrder[b.criticality] || 99;
+          return aCrit - bCrit;
+      });
 
       todayRoadworks.forEach(i => {
-        const sev = i.severity >= 4 ? "high" : i.severity >= 2 ? "medium" : "low";
-        const emoji = sev === "high" ? "🔴" : sev === "medium" ? "🟠" : "🟢";
+        let sev = "low";
+        let emoji = "🚧"; // Roadworks emoji
 
-        const roads = i.roadNumbers?.join(", ") || "Unnamed road";
-        const desc = i.events?.[0]?.description || "No description available";
+        if (i.criticality === "critical") {
+            sev = "high";
+        } else if (i.criticality === "major") {
+            sev = "medium";
+        }
+
+        const desc = i.description || "No description available";
+        const roads = i.roadNames?.join(", ") || "Affected roads unclear";
 
         const d = document.createElement("div");
         d.className = `item ${sev}`;
         d.innerHTML = `
           <strong>${emoji} ${roads}</strong> – 
-          <em>roadwork</em><br>
+          <em>Roadwork</em><br>
           ${desc} 
-          <br><small>Severity: ${i.severity}</small>
+          <br><small>Criticality: ${i.criticality || 'Unknown'}</small>
         `;
         container.appendChild(d);
       });
@@ -520,92 +533,145 @@
         });
     }
 
-    // --- TfL Public Transport Functions ---
-    async function fetchTfLStatus(lines) {
-      const url = `https://api.tfl.gov.uk/Line/${lines}/Status?app_key=${TFL_KEY}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`TfL API error: ${res.status} ${res.statusText}`);
-      return await res.json();
+    // --- Public Transport Functions ---
+    // Helper to fetch TfL line statuses (Tube, Elizabeth, Overground)
+    async function fetchTfLLineStatus(modes) {
+        const url = `https://api.tfl.gov.uk/Line/Mode/${modes}/Status?app_key=${TFL_KEY}`;
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            throw new Error(`TfL Line Status API error: ${resp.status} ${resp.statusText}`);
+        }
+        const data = await resp.json();
+        return data || [];
     }
 
-    async function fetchAndRenderTubeStatus() {
-      const container = document.getElementById("tube-status");
-      container.innerHTML = ''; 
-      try {
-        // Fetch Tube, Elizabeth Line, and Overground status
-        const url = `https://api.tfl.gov.uk/Line/Mode/tube,elizabeth-line,overground/Status?app_key=${TFL_KEY}`;
-        const res = await fetch(url);
-        if (!res.ok) {
-          throw new Error(`TfL API error: ${res.status} ${res.statusText}`);
-        }
-        const data = await res.json();
-
-        if (!Array.isArray(data) || data.length === 0) {
-          container.textContent = "No Tube, Elizabeth or Overground status data available.";
-          return;
+    // Helper to fetch National Rail delays from proxy
+    async function fetchNationalRailDelaysFromProxy() {
+        const container = document.getElementById("public-transport-status"); 
+        if (NATIONAL_RAIL_API_PROXY_URL === "YOUR_NATIONAL_RAIL_API_PROXY_URL") {
+            console.warn("National Rail data requires a backend proxy URL to be configured.");
+            return [];
         }
 
-        // Filter out "Good Service" lines and then sort the remaining ones
-        const linesWithIssues = data.filter(line => {
-            const statusObj = line.lineStatuses?.[0];
-            const severity = statusObj?.statusSeverity;
-            return severity !== 10; // Keep lines if severity is NOT 10 (Good Service)
-        });
-
-        linesWithIssues.sort((a, b) => {
-          const aSeverity = a.lineStatuses?.[0]?.statusSeverity;
-          const bSeverity = b.lineStatuses?.[0]?.statusSeverity;
-
-          // Always prioritize higher severity (lower number)
-          return aSeverity - bSeverity;
-        });
-
-        if (linesWithIssues.length === 0) {
-            container.innerHTML = "<p>All Tube, Elizabeth & Overground lines are currently running with a Good Service.</p>";
-            return;
-        }
-
-
-        linesWithIssues.forEach(line => {
-          const name = line.name || "Unknown line";
-          const statusObj = line.lineStatuses?.[0];
-          const status = statusObj?.statusSeverityDescription || "Status unknown";
-          const reason = statusObj?.reason || "";
-          const severity = statusObj?.statusSeverity;
-
-          let sevClass = "low"; 
-          let emoji = "🟢"; 
-
-          if (severity !== undefined) {
-            // Apply high/medium for issues, even if filtered out Good Service
-            if (severity === 0) { // Closed
-              sevClass = "high";
-              emoji = "🔴";
-            } else if (severity < 10) { // Any other severity less than 10 (e.g., minor, major, part suspended)
-              sevClass = "medium";
-              emoji = "🟠";
+        try {
+            const params = new URLSearchParams({
+                stations: SE_LONDON_RAIL_STATIONS.join(','),
+                tocs: TARGET_TOC_CODES.join(',') 
+            });
+            const url = `${NATIONAL_RAIL_API_PROXY_URL}?${params.toString()}`;
+            
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                const errorBody = await resp.text();
+                throw new Error(`National Rail Proxy error: ${resp.status} ${resp.statusText}. Response: ${errorBody}`);
             }
-            // If severity was 10 (Good Service), it would have been filtered out by now
-          }
-          
-          const d = document.createElement("div");
-          d.className = `item ${sevClass} tube-line-item`; 
-          d.innerHTML = `
-            <strong>${emoji} ${name}:</strong> ${status}${reason ? " – " + reason : ""}
-          `;
-          container.appendChild(d);
-        });
-
-      } catch (err) {
-        container.textContent = "Error fetching Tube, Elizabeth & Overground status: " + err.message;
-        console.error(err);
-      }
+            const data = await resp.json();
+            return data; 
+        } catch (error) {
+            console.error("Error fetching National Rail data:", error);
+            return [];
+        }
     }
+
+    // Main function to fetch and render all combined public transport status
+    async function fetchAndRenderPublicTransportStatus() {
+        const container = document.getElementById("public-transport-status");
+        container.innerHTML = ''; 
+        let combinedList = [];
+
+        try {
+            // Fetch TfL Lines (Tube, Elizabeth, Overground)
+            const tflLinesData = await fetchTfLLineStatus("tube,elizabeth-line,overground");
+            tflLinesData.forEach(line => {
+                const statusObj = line.lineStatuses?.[0];
+                const severity = statusObj?.statusSeverity;
+
+                if (severity !== 10) { 
+                    combinedList.push({
+                        type: 'tfl-line',
+                        name: line.name,
+                        statusDescription: statusObj?.statusSeverityDescription || "Status unknown",
+                        reason: statusObj?.reason || "",
+                        severityCode: severity,
+                        displaySeverity: severity === 0 ? 1 : 2 
+                    });
+                }
+            });
+
+            // Fetch National Rail Delays (Southeastern & Thameslink)
+            const railDelaysData = await fetchNationalRailDelaysFromProxy();
+            railDelaysData.forEach(delay => {
+                combinedList.push({
+                    type: 'national-rail-service',
+                    station: delay.station,
+                    destination: delay.destination,
+                    scheduled: delay.scheduled,
+                    expected: delay.expected,
+                    status: delay.status, 
+                    platform: delay.platform,
+                    delayReason: delay.delayReason,
+                    displaySeverity: delay.status === "Cancelled" ? 1 : 2
+                });
+            });
+
+            if (combinedList.length === 0) {
+                container.innerHTML = "<p>All Tube, Elizabeth, Overground, Southeastern & Thameslink services are currently running with a Good Service / No significant delays.</p>";
+                return;
+            }
+
+            combinedList.sort((a, b) => {
+                if (a.displaySeverity !== b.displaySeverity) {
+                    return a.displaySeverity - b.displaySeverity;
+                }
+                if (a.type === 'tfl-line' && b.type === 'tfl-line') {
+                    return a.name.localeCompare(b.name);
+                }
+                if (a.type === 'national-rail-service' && b.type === 'national-rail-service') {
+                    return (a.expected || a.scheduled).localeCompare(b.expected || b.scheduled);
+                }
+                return 0; 
+            });
+
+            combinedList.forEach(item => {
+                const d = document.createElement("div");
+                let sevClass = "low";
+                let emoji = "🟢"; 
+
+                if (item.displaySeverity === 1) { 
+                    sevClass = "high";
+                    emoji = "🔴";
+                } else if (item.displaySeverity === 2) { 
+                    sevClass = "medium";
+                    emoji = "🟠";
+                }
+
+                if (item.type === 'tfl-line') {
+                    d.className = `item ${sevClass} tube-line-item`;
+                    d.innerHTML = `
+                        <strong>${emoji} ${item.name}:</strong> ${item.statusDescription}${item.reason ? " – " + item.reason : ""}
+                    `;
+                } else if (item.type === 'national-rail-service') {
+                    d.className = `item ${sevClass}`; 
+                    d.innerHTML = `
+                        <strong>${emoji} Train from ${item.station} to ${item.destination}</strong><br>
+                        Scheduled: ${item.scheduled}, Expected: ${item.expected} (Platform: ${item.platform || 'TBC'})<br>
+                        Status: <em>${item.status}</em>${item.delayReason ? ' – ' + item.delayReason : ''}
+                    `;
+                }
+                container.appendChild(d);
+            });
+
+        } catch (err) {
+            container.textContent = "Error fetching public transport status: " + err.message;
+            console.error(err);
+        }
+    }
+
 
     async function fetchAndRenderOtherStatus(containerId, lines, label) {
       const container = document.getElementById(containerId);
       try {
-        const data = await fetchTfLStatus(lines);
+        const data = await fetchTfLStatus(lines); 
         if (!Array.isArray(data) || data.length === 0) {
           container.textContent = `No ${label} status data available.`;
           return;
@@ -636,78 +702,11 @@
       }
     }
 
-    // --- National Rail Functions ---
-    async function fetchNationalRailDelays() {
-        const container = document.getElementById("national-rail-delays");
-        if (NATIONAL_RAIL_API_PROXY_URL === "YOUR_NATIONAL_RAIL_API_PROXY_URL") {
-            container.textContent = "National Rail data requires a backend proxy URL to be configured.";
-            console.warn("NATIONAL_RAIL_API_PROXY_URL is not set. Please configure your backend proxy URL.");
-            return [];
-        }
-
-        try {
-            const params = new URLSearchParams({
-                stations: SE_LONDON_RAIL_STATIONS.join(','),
-                tocs: TARGET_TOC_CODES.join(',') 
-            });
-            const url = `${NATIONAL_RAIL_API_PROXY_URL}?${params.toString()}`;
-            
-            const resp = await fetch(url);
-            if (!resp.ok) {
-                const errorBody = await resp.text();
-                throw new Error(`National Rail Proxy error: ${resp.status} ${resp.statusText}. Response: ${errorBody}`);
-            }
-            const data = await resp.json();
-            return data; 
-        } catch (error) {
-            console.error("Error fetching National Rail data:", error);
-            container.textContent = "Error loading National Rail delays.";
-            return [];
-        }
-    }
-
-    function renderNationalRailDelays(list) {
-        const container = document.getElementById("national-rail-delays");
-        container.innerHTML = ""; 
-
-        if (!list.length) {
-            container.innerHTML = "<p>No significant Southeastern or Thameslink delays reported for selected stations.</p>";
-            return;
-        }
-
-        list.sort((a, b) => {
-            if (a.status === "Cancelled" && b.status !== "Cancelled") return -1;
-            if (a.status !== "Cancelled" && b.status === "Cancelled") return 1;
-            return (a.expected || a.scheduled).localeCompare(b.expected || b.scheduled); 
-        });
-
-        list.forEach(delay => {
-            let sevClass = "low";
-            let emoji = "✅"; 
-            if (delay.status === "Cancelled") {
-                sevClass = "high";
-                emoji = "❌";
-            } else if (delay.status === "Delayed") {
-                sevClass = "medium";
-                emoji = "⚠️";
-            }
-
-            const d = document.createElement("div");
-            d.className = `item ${sevClass}`; 
-            d.innerHTML = `
-            <strong>${emoji} ${delay.station} to ${delay.destination}</strong><br>
-            Scheduled: ${delay.scheduled}, Expected: ${delay.expected} (Platform: ${delay.platform || 'TBC'})<br>
-            Status: <em>${delay.status}</em>${delay.delayReason ? ' - ' + delay.delayReason : ''}
-            `;
-            container.appendChild(d);
-        });
-    }
-
     // --- Main Update Functions ---
     async function updateTraffic() {
-      const tomtomIncidents = await fetchTraffic();
-      renderTraffic(tomtomIncidents);
-      renderRoadworksToday(tomtomIncidents);
+      const hereIncidents = await fetchTraffic(); // Now fetches from HERE
+      renderTraffic(hereIncidents);
+      renderRoadworksToday(hereIncidents); // Roadworks also from HERE
 
       const { tflTrafficIncidents, tflRoadworksIncidents } = await fetchTfLRoadDisruptions();
       renderTfLTraffic(tflTrafficIncidents);
@@ -717,7 +716,7 @@
     }
     
     async function updateTfL() { 
-      await fetchAndRenderTubeStatus(); // Now includes Elizabeth & Overground, filtered for delays
+      await fetchAndRenderPublicTransportStatus(); 
       await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus");
       await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry");
       setTimeout(updateTfL, REFRESH_INTERVAL_MS);
@@ -729,17 +728,10 @@
         setTimeout(updateWeatherForecast, WEATHER_REFRESH_INTERVAL_MS);
     }
 
-    async function updateNationalRail() {
-        const railDelays = await fetchNationalRailDelays();
-        renderNationalRailDelays(railDelays);
-        setTimeout(updateNationalRail, RAIL_REFRESH_INTERVAL_MS);
-    }
-
     // Initial calls for all data
     updateWeatherForecast();
     updateTraffic();
-    updateTfL();
-    updateNationalRail(); 
+    updateTfL(); 
   </script>
 </body>
 </html>
