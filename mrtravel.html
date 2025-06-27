@@ -59,14 +59,30 @@
     const TOMTOM_KEY = "ZKntlBjAvEOBSRtfMsEdbo31b6UcmJHJ";
     const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
 
+    // Refresh interval for all data fetches (5 minutes)
+    const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+
     // Coordinates roughly covering Lewisham, Greenwich, Bexley, Bromley, Dartford & M25 j5-j31
     // (You can adjust bbox as needed)
     const bbox = "51.665,-0.405,51.297,0.617"; // tlLat, tlLon, brLat, brLon
 
     async function fetchTraffic() {
       const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
-      const resp = await fetch(url).then(r => r.json());
-      return resp.incidents || [];
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          // Throw an error if the HTTP response status is not 2xx
+          throw new Error(`TomTom API responded with status: ${resp.status} ${resp.statusText}`);
+        }
+        const data = await resp.json();
+        return data.incidents || [];
+      } catch (error) {
+        console.error("Error fetching TomTom traffic data:", error);
+        // Update the UI to show an error message
+        document.getElementById("incidents").textContent = "Error loading traffic incidents.";
+        document.getElementById("roadworks").textContent = "Error loading roadworks.";
+        return []; // Return an empty array to prevent further errors in rendering functions
+      }
     }
 
     function isEventToday(event) {
@@ -108,7 +124,11 @@
     function renderRoadworksToday(list) {
       const container = document.getElementById("roadworks");
       container.innerHTML = "";
-      if (!list.length) return container.innerHTML = "<p>No roadworks reported for today.</p>";
+      // If the overall list is empty, no roadworks either
+      if (!list.length) {
+        container.innerHTML = "<p>No roadworks reported for today.</p>";
+        return;
+      }
 
       const roadworksTypes = ["ROAD_WORK", "CONSTRUCTION", "MAINTENANCE"];
       const todayRoadworks = list.filter(i =>
@@ -146,16 +166,16 @@
       const incidents = await fetchTraffic();
       renderTraffic(incidents);
       renderRoadworksToday(incidents);
-      setTimeout(updateTraffic, 5 * 60 * 1000);
+      setTimeout(updateTraffic, REFRESH_INTERVAL_MS);
     }
-    updateTraffic();
+    updateTraffic(); // Initial call to update traffic data
 
     // TfL API calls for transport statuses
 
     async function fetchTfLStatus(lines) {
       const url = `https://api.tfl.gov.uk/Line/${lines}/Status?app_key=${TFL_KEY}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`TfL API error: ${res.status}`);
+      if (!res.ok) throw new Error(`TfL API error: ${res.status} ${res.statusText}`);
       return await res.json();
     }
 
@@ -212,9 +232,9 @@
       await fetchAndRenderTubeStatus();
       await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus");
       await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry");
-      setTimeout(updateTfL, 5 * 60 * 1000);
+      setTimeout(updateTfL, REFRESH_INTERVAL_MS);
     }
-    updateTfL();
+    updateTfL(); // Initial call to update TfL data
   </script>
 </body>
 </html>
