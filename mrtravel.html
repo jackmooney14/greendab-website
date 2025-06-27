@@ -90,8 +90,8 @@
   <div class="section" id="transport">
     <h2>🚇 Public Transport Status</h2>
     <div>
-      <h3>Tube Status</h3>
-      <div id="tube-status">Loading Tube status…</div>
+      <h3>Tube, Elizabeth & Overground Status</h3>
+      <div id="tube-status">Loading Tube, Elizabeth & Overground status…</div>
     </div>
     <div>
       <h3>River Bus</h3>
@@ -222,7 +222,7 @@
             } else if (itemDay.getTime() === tomorrow.getTime()) { 
                 tomorrowMinTemp = Math.min(tomorrowMinTemp, item.main.temp_min);
                 tomorrowMaxTemp = Math.max(tomorrowMaxTemp, item.main.temp_max);
-                if (!isTomorrowSet) { // Get a representative description for tomorrow (e.g., from an early forecast)
+                if (!isTomorrowSet) { 
                     tomorrowDescription = item.weather[0].description;
                     isTomorrowSet = true; 
                 }
@@ -532,7 +532,8 @@
       const container = document.getElementById("tube-status");
       container.innerHTML = ''; 
       try {
-        const url = `https://api.tfl.gov.uk/Line/Mode/tube/Status?app_key=${TFL_KEY}`;
+        // Fetch Tube, Elizabeth Line, and Overground status
+        const url = `https://api.tfl.gov.uk/Line/Mode/tube,elizabeth-line,overground/Status?app_key=${TFL_KEY}`;
         const res = await fetch(url);
         if (!res.ok) {
           throw new Error(`TfL API error: ${res.status} ${res.statusText}`);
@@ -540,28 +541,32 @@
         const data = await res.json();
 
         if (!Array.isArray(data) || data.length === 0) {
-          container.textContent = "No Tube status data available.";
+          container.textContent = "No Tube, Elizabeth or Overground status data available.";
           return;
         }
 
-        data.sort((a, b) => {
+        // Filter out "Good Service" lines and then sort the remaining ones
+        const linesWithIssues = data.filter(line => {
+            const statusObj = line.lineStatuses?.[0];
+            const severity = statusObj?.statusSeverity;
+            return severity !== 10; // Keep lines if severity is NOT 10 (Good Service)
+        });
+
+        linesWithIssues.sort((a, b) => {
           const aSeverity = a.lineStatuses?.[0]?.statusSeverity;
           const bSeverity = b.lineStatuses?.[0]?.statusSeverity;
 
-          const aHasIssue = aSeverity !== 10; 
-          const bHasIssue = bSeverity !== 10;
-
-          if (aHasIssue && !bHasIssue) return -1; 
-          if (!aHasIssue && bHasIssue) return 1;  
-
-          if (aHasIssue && bHasIssue) {
-            return aSeverity - bSeverity;
-          } else { 
-            return a.name.localeCompare(b.name);
-          }
+          // Always prioritize higher severity (lower number)
+          return aSeverity - bSeverity;
         });
 
-        data.forEach(line => {
+        if (linesWithIssues.length === 0) {
+            container.innerHTML = "<p>All Tube, Elizabeth & Overground lines are currently running with a Good Service.</p>";
+            return;
+        }
+
+
+        linesWithIssues.forEach(line => {
           const name = line.name || "Unknown line";
           const statusObj = line.lineStatuses?.[0];
           const status = statusObj?.statusSeverityDescription || "Status unknown";
@@ -572,16 +577,15 @@
           let emoji = "🟢"; 
 
           if (severity !== undefined) {
-            if (severity === 10) { 
-              sevClass = "low";
-              emoji = "🟢";
-            } else if (severity === 0) { 
+            // Apply high/medium for issues, even if filtered out Good Service
+            if (severity === 0) { // Closed
               sevClass = "high";
               emoji = "🔴";
-            } else { 
+            } else if (severity < 10) { // Any other severity less than 10 (e.g., minor, major, part suspended)
               sevClass = "medium";
               emoji = "🟠";
             }
+            // If severity was 10 (Good Service), it would have been filtered out by now
           }
           
           const d = document.createElement("div");
@@ -593,7 +597,7 @@
         });
 
       } catch (err) {
-        container.textContent = "Error fetching Tube status: " + err.message;
+        container.textContent = "Error fetching Tube, Elizabeth & Overground status: " + err.message;
         console.error(err);
       }
     }
@@ -642,11 +646,9 @@
         }
 
         try {
-            // Pass stations and TOC codes to your backend proxy
-            // Your proxy will use these to query Darwin and filter results.
             const params = new URLSearchParams({
                 stations: SE_LONDON_RAIL_STATIONS.join(','),
-                tocs: TARGET_TOC_CODES.join(',') // Sending the desired TOCs to the proxy
+                tocs: TARGET_TOC_CODES.join(',') 
             });
             const url = `${NATIONAL_RAIL_API_PROXY_URL}?${params.toString()}`;
             
@@ -656,8 +658,6 @@
                 throw new Error(`National Rail Proxy error: ${resp.status} ${resp.statusText}. Response: ${errorBody}`);
             }
             const data = await resp.json();
-            // Assuming your proxy returns a JSON array of delayed services
-            // that are already filtered by the requested stations AND TOCs.
             return data; 
         } catch (error) {
             console.error("Error fetching National Rail data:", error);
@@ -705,21 +705,19 @@
 
     // --- Main Update Functions ---
     async function updateTraffic() {
-      // TomTom Traffic
       const tomtomIncidents = await fetchTraffic();
       renderTraffic(tomtomIncidents);
-      renderRoadworksToday(tomtomIncidents); // Roadworks still from TomTom
+      renderRoadworksToday(tomtomIncidents);
 
-      // TfL Road Disruptions (now categorized)
       const { tflTrafficIncidents, tflRoadworksIncidents } = await fetchTfLRoadDisruptions();
       renderTfLTraffic(tflTrafficIncidents);
-      renderTfLRoadworks(tflRoadworksIncidents); // Render TfL specific roadworks
+      renderTfLRoadworks(tflRoadworksIncidents);
 
       setTimeout(updateTraffic, REFRESH_INTERVAL_MS);
     }
     
     async function updateTfL() { 
-      await fetchAndRenderTubeStatus();
+      await fetchAndRenderTubeStatus(); // Now includes Elizabeth & Overground, filtered for delays
       await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus");
       await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry");
       setTimeout(updateTfL, REFRESH_INTERVAL_MS);
@@ -741,7 +739,7 @@
     updateWeatherForecast();
     updateTraffic();
     updateTfL();
-    updateNationalRail(); // Start fetching National Rail data
+    updateNationalRail(); 
   </script>
 </body>
 </html>
