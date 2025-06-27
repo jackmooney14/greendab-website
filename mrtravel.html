@@ -1,103 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>SE London & M25 Traffic Hotspots</title>
+  <meta charset="UTF-8" />
+  <title>SE London Presenter Dashboard</title>
   <style>
     body {
       font-family: sans-serif;
-      background: #f4f4f4;
       padding: 2em;
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
+      background: #fafafa;
     }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    #updated {
-      text-align: center;
-      font-size: 0.9em;
-      margin-bottom: 1em;
-      color: #555;
-    }
-    .incident {
-      background: white;
-      margin-bottom: 1em;
-      padding: 1em;
-      border-left: 6px solid;
-      border-radius: 5px;
-    }
+    h1, h2 { text-align: center; }
+    .section { margin-bottom: 2em; }
+    .item { background: white; padding: 1em; margin-bottom: .8em; border-left: 6px solid; border-radius: 5px; }
     .high { border-color: #e53935; }
     .medium { border-color: #fb8c00; }
     .low { border-color: #43a047; }
-    .road-name { font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>SE London Traffic Hotspots</h1>
-  <div id="updated">Loading...</div>
-  <div id="incidents"></div>
+  <h1>SE London Presenter Dashboard</h1>
+
+  <div class="section" id="traffic">
+    <h2>🚦 Traffic Hotspots</h2>
+    <div id="incidents">Loading traffic…</div>
+  </div>
+
+  <div class="section" id="transport">
+    <h2>🚇 Public Transport Status</h2>
+    <div id="tube">Loading Tube status…</div>
+    <div id="river">Loading River Bus…</div>
+    <div id="ferry">Loading Woolwich Ferry…</div>
+  </div>
 
   <script>
-    const apiKey = "ZKntlBjAvEOBSRtfMsEdbo31b6UcmJHJ";
+    // 🔑 API keys
+    const TOMTOM_KEY = "ZKntlBjAvEOBSRtfMsEdbo31b6UcmJHJ";
+    const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
 
-    // Covers Lewisham, Greenwich, Bromley, Bexley, Dartford, M25 J5–J31
-    const boundingBox = {
-      topLeft: "51.520,0.00",
-      btmRight: "51.30,0.42"
-    };
+    // 🧭 Bounding box (Lewisham to Dartford, M25 J5–31)
+    const bbox = { tl: "51.520,0.00", br: "51.30,0.42" };
 
-    async function fetchIncidents() {
-      const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${boundingBox.topLeft},${boundingBox.btmRight}&fields=roadNumbers,events&language=en-GB&key=${apiKey}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      return data.incidents || [];
+    // 🚦 Traffic Data (TomTom)
+    async function fetchTraffic() {
+      const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox.tl},${bbox.br}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
+      const resp = await fetch(url).then(r => r.json());
+      return resp.incidents || [];
     }
 
-    function severityClass(severity) {
-      if (severity >= 4) return "high";
-      if (severity >= 2) return "medium";
-      return "low";
-    }
-
-    function renderIncidents(incidents) {
+    function renderTraffic(list) {
       const container = document.getElementById("incidents");
       container.innerHTML = "";
-
-      incidents.sort((a, b) => b.severity - a.severity);
-
-      if (incidents.length === 0) {
-        container.innerHTML = "<p>No current incidents reported in the area.</p>";
-        return;
-      }
-
-      incidents.forEach(i => {
-        const div = document.createElement("div");
-        const severity = severityClass(i.severity);
-        const emoji = severity === "high" ? "🔴" : severity === "medium" ? "🟠" : "🟢";
-        const road = i.roadNumbers?.join(", ") || "Unnamed road";
-        const desc = i?.events?.[0]?.description || "Traffic issue reported";
-
-        div.className = `incident ${severity}`;
-        div.innerHTML = `
-          <div class="road-name">${emoji} ${road}</div>
-          <div>${desc}</div>
-          <div>Severity: ${i.severity}</div>
-        `;
-        container.appendChild(div);
+      if (!list.length) return container.innerHTML = "<p>No traffic incidents reported.</p>";
+      list.sort((a, b) => b.severity - a.severity);
+      list.forEach(i => {
+        const sev = i.severity >= 4 ? "high" : i.severity >= 2 ? "medium" : "low";
+        const emoji = sev === "high" ? "🔴" : sev === "medium" ? "🟠" : "🟢";
+        const roads = i.roadNumbers?.join(", ") || "Unnamed";
+        const desc = i.events?.[0]?.description || "Incident reported";
+        const d = document.createElement("div");
+        d.className = `item ${sev}`;
+        d.innerHTML = `<strong>${emoji} ${roads}</strong> – ${desc} (Severity: ${i.severity})`;
+        container.appendChild(d);
       });
-
-      document.getElementById("updated").textContent = "Last updated: " + new Date().toLocaleTimeString();
     }
 
     async function updateTraffic() {
-      const incidents = await fetchIncidents();
-      renderIncidents(incidents);
+      renderTraffic(await fetchTraffic());
+      setTimeout(updateTraffic, 5 * 60 * 1000); // 5 min refresh
+    }
+    updateTraffic();
+
+    // 🚇 TfL Transport Status
+    const tflBase = "https://api.tfl.gov.uk/Line";
+    const keyParam = `app_key=${TFL_KEY}`;
+
+    async function fetchTfLStatus(lines) {
+      const url = `${tflBase}/${lines}/Status?${keyParam}`;
+      const res = await fetch(url);
+      return await res.json();
     }
 
-    updateTraffic(); // initial
-    setInterval(updateTraffic, 5 * 60 * 1000); // every 5 minutes
+    function renderStatus(containerId, data, label) {
+      const container = document.getElementById(containerId);
+      if (!Array.isArray(data)) {
+        container.textContent = `${label}: Error retrieving data`;
+        return;
+      }
+
+      const messages = data.map(line => {
+        const name = line.name;
+        const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
+        const reason = line.lineStatuses?.[0]?.reason || "";
+        return `🚉 ${name}: ${status}${reason ? ` – ${reason}` : ""}`;
+      });
+
+      container.innerHTML = `<ul>${messages.map(msg => `<li>${msg}</li>`).join("")}</ul>`;
+    }
+
+    async function updateTfL() {
+      try {
+        const [tube, river, ferry] = await Promise.all([
+          fetchTfLStatus("tube"),
+          fetchTfLStatus("rb1,rb6"),
+          fetchTfLStatus("woolwich-ferry")
+        ]);
+
+        renderStatus("tube", tube, "Tube");
+        renderStatus("river", river, "River Bus");
+        renderStatus("ferry", ferry, "Woolwich Ferry");
+      } catch (err) {
+        console.error("TfL Error:", err);
+      }
+
+      setTimeout(updateTfL, 5 * 60 * 1000); // refresh
+    }
+
+    updateTfL();
   </script>
 </body>
 </html>
