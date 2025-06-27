@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SE London & M25 Traffic Hotspots</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      padding: 2em;
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    #updated {
+      text-align: center;
+      font-size: 0.9em;
+      margin-bottom: 1em;
+      color: #555;
+    }
+    .incident {
+      background: white;
+      margin-bottom: 1em;
+      padding: 1em;
+      border-left: 6px solid;
+      border-radius: 5px;
+    }
+    .high { border-color: #e53935; }
+    .medium { border-color: #fb8c00; }
+    .low { border-color: #43a047; }
+    .road-name { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>SE London Traffic Hotspots</h1>
+  <div id="updated">Loading...</div>
+  <div id="incidents"></div>
+
+  <script>
+    const apiKey = "ZKntlBjAvEOBSRtfMsEdbo31b6UcmJHJ";
+
+    // Covers Lewisham, Greenwich, Bromley, Bexley, Dartford, M25 J5–J31
+    const boundingBox = {
+      topLeft: "51.520,0.00",
+      btmRight: "51.30,0.42"
+    };
+
+    async function fetchIncidents() {
+      const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${boundingBox.topLeft},${boundingBox.btmRight}&fields=roadNumbers,events&language=en-GB&key=${apiKey}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return data.incidents || [];
+    }
+
+    function severityClass(severity) {
+      if (severity >= 4) return "high";
+      if (severity >= 2) return "medium";
+      return "low";
+    }
+
+    function renderIncidents(incidents) {
+      const container = document.getElementById("incidents");
+      container.innerHTML = "";
+
+      incidents.sort((a, b) => b.severity - a.severity);
+
+      if (incidents.length === 0) {
+        container.innerHTML = "<p>No current incidents reported in the area.</p>";
+        return;
+      }
+
+      incidents.forEach(i => {
+        const div = document.createElement("div");
+        const severity = severityClass(i.severity);
+        const emoji = severity === "high" ? "🔴" : severity === "medium" ? "🟠" : "🟢";
+        const road = i.roadNumbers?.join(", ") || "Unnamed road";
+        const desc = i?.events?.[0]?.description || "Traffic issue reported";
+
+        div.className = `incident ${severity}`;
+        div.innerHTML = `
+          <div class="road-name">${emoji} ${road}</div>
+          <div>${desc}</div>
+          <div>Severity: ${i.severity}</div>
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById("updated").textContent = "Last updated: " + new Date().toLocaleTimeString();
+    }
+
+    async function updateTraffic() {
+      const incidents = await fetchIncidents();
+      renderIncidents(incidents);
+    }
+
+    updateTraffic(); // initial
+    setInterval(updateTraffic, 5 * 60 * 1000); // every 5 minutes
+  </script>
+</body>
+</html>
