@@ -17,6 +17,13 @@
     .high { border-color: #e53935; }
     .medium { border-color: #fb8c00; }
     .low { border-color: #43a047; }
+    pre {
+      white-space: pre-wrap;
+      font-family: monospace;
+      background: #eee;
+      padding: 1em;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -34,34 +41,43 @@
 
   <div class="section" id="transport">
     <h2>🚇 Public Transport Status</h2>
-    <div id="tube">Loading Tube status…</div>
-    <div id="river">Loading River Bus…</div>
-    <div id="ferry">Loading Woolwich Ferry…</div>
+    <div>
+      <h3>Tube Status</h3>
+      <div id="tube-status">Loading Tube status…</div>
+    </div>
+    <div>
+      <h3>River Bus</h3>
+      <div id="river">Loading River Bus…</div>
+    </div>
+    <div>
+      <h3>Woolwich Ferry</h3>
+      <div id="ferry">Loading Woolwich Ferry…</div>
+    </div>
   </div>
 
   <script>
     const TOMTOM_KEY = "ZKntlBjAvEOBSRtfMsEdbo31b6UcmJHJ";
     const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
 
-    const bbox = { tl: "51.520,0.00", br: "51.30,0.42" };
+    // Coordinates roughly covering Lewisham, Greenwich, Bexley, Bromley, Dartford & M25 j5-j31
+    // (You can adjust bbox as needed)
+    const bbox = "51.665,-0.405,51.297,0.617"; // tlLat, tlLon, brLat, brLon
 
     async function fetchTraffic() {
-      const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox.tl},${bbox.br}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
+      const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
       const resp = await fetch(url).then(r => r.json());
       return resp.incidents || [];
     }
 
-    // Helper: check if an event occurs today
     function isEventToday(event) {
       if (!event || !event.startTime || !event.endTime) return false;
       const now = new Date();
       const start = new Date(event.startTime);
       const end = new Date(event.endTime);
-      return start <= now && now <= end && 
-        start.toDateString() === now.toDateString();
+      // Check if event is ongoing now and started today
+      return start <= now && now <= end && start.toDateString() === now.toDateString();
     }
 
-    // Render all incidents
     function renderTraffic(list) {
       const container = document.getElementById("incidents");
       container.innerHTML = "";
@@ -89,15 +105,13 @@
       });
     }
 
-    // Render today's roadworks only
     function renderRoadworksToday(list) {
       const container = document.getElementById("roadworks");
       container.innerHTML = "";
       if (!list.length) return container.innerHTML = "<p>No roadworks reported for today.</p>";
 
-      // Filter by roadworks types & occurring today
       const roadworksTypes = ["ROAD_WORK", "CONSTRUCTION", "MAINTENANCE"];
-      const todayRoadworks = list.filter(i => 
+      const todayRoadworks = list.filter(i =>
         roadworksTypes.includes(i.type) &&
         i.events?.some(isEventToday)
       );
@@ -136,48 +150,68 @@
     }
     updateTraffic();
 
-    // TfL transport status code (same as before)
-    const tflBase = "https://api.tfl.gov.uk/Line";
-    const keyParam = `app_key=${TFL_KEY}`;
+    // TfL API calls for transport statuses
 
     async function fetchTfLStatus(lines) {
-      const url = `${tflBase}/${lines}/Status?${keyParam}`;
+      const url = `https://api.tfl.gov.uk/Line/${lines}/Status?app_key=${TFL_KEY}`;
       const res = await fetch(url);
+      if (!res.ok) throw new Error(`TfL API error: ${res.status}`);
       return await res.json();
     }
 
-    function renderStatus(containerId, data, label) {
-      const container = document.getElementById(containerId);
-      if (!Array.isArray(data)) {
-        container.textContent = `${label}: Error retrieving data`;
-        return;
+    // Render Tube Status as readable text
+    async function fetchAndRenderTubeStatus() {
+      const container = document.getElementById("tube-status");
+      try {
+        const data = await fetchTfLStatus("tube");
+        if (!Array.isArray(data) || data.length === 0) {
+          container.textContent = "No Tube status data available.";
+          return;
+        }
+
+        const lines = data.map(line => {
+          const name = line.name || "Unknown line";
+          const statusObj = line.lineStatuses?.[0];
+          const status = statusObj?.statusSeverityDescription || "Status unknown";
+          const reason = statusObj?.reason || "";
+          return `${name}: ${status}${reason ? " – " + reason : ""}`;
+        });
+
+        container.innerHTML = "<pre>" + lines.join("\n") + "</pre>";
+      } catch (err) {
+        container.textContent = "Error fetching Tube status: " + err.message;
+        console.error(err);
       }
+    }
 
-      const messages = data.map(line => {
-        const name = line.name;
-        const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
-        const reason = line.lineStatuses?.[0]?.reason || "";
-        return `🚉 ${name}: ${status}${reason ? ` – ${reason}` : ""}`;
-      });
+    // Render River Bus and Woolwich Ferry with simple lists
+    async function fetchAndRenderOtherStatus(containerId, lines, label) {
+      const container = document.getElementById(containerId);
+      try {
+        const data = await fetchTfLStatus(lines);
+        if (!Array.isArray(data) || data.length === 0) {
+          container.textContent = `No ${label} status data available.`;
+          return;
+        }
 
-      container.innerHTML = `<ul>${messages.map(msg => `<li>${msg}</li>`).join("")}</ul>`;
+        const messages = data.map(line => {
+          const name = line.name || label;
+          const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
+          const reason = line.lineStatuses?.[0]?.reason || "";
+          return `🚉 ${name}: ${status}${reason ? " – " + reason : ""}`;
+        });
+
+        container.innerHTML = "<ul>" + messages.map(m => `<li>${m}</li>`).join("") + "</ul>";
+      } catch (err) {
+        container.textContent = `Error fetching ${label} status: ` + err.message;
+        console.error(err);
+      }
     }
 
     async function updateTfL() {
-      try {
-        const [tube, river, ferry] = await Promise.all([
-          fetchTfLStatus("tube"),
-          fetchTfLStatus("rb1,rb6"),
-          fetchTfLStatus("woolwich-ferry")
-        ]);
-
-        renderStatus("tube", tube, "Tube");
-        renderStatus("river", river, "River Bus");
-        renderStatus("ferry", ferry, "Woolwich Ferry");
-      } catch (err) {
-        console.error("TfL Error:", err);
-      }
-
+      await fetchAndRenderTubeStatus();
+      await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus");
+      await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry");
       setTimeout(updateTfL, 5 * 60 * 1000);
     }
     updateTfL();
