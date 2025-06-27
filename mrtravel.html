@@ -306,7 +306,8 @@
     async function fetchTraffic() {
       // HERE Traffic API bbox format: southLat,westLon;northLat,eastLon
       const hereBbox = `${bbox.brLat},${bbox.tlLon};${bbox.tlLat},${bbox.brLon}`;
-      const url = `https://traffic.api.here.com/v7/incidents?apiKey=${HERE_KEY}&bbox=${hereBbox}&timeResolution=day`; // timeResolution can optimize payload
+      // Using 'incidents' endpoint with apiKey in URL for v7
+      const url = `https://traffic.api.here.com/v7/incidents?apiKey=${HERE_KEY}&bbox=${hereBbox}&timeResolution=day`; 
       
       try {
         const resp = await fetch(url);
@@ -314,8 +315,8 @@
           throw new Error(`HERE Traffic API responded with status: ${resp.status} ${resp.statusText}`);
         }
         const data = await resp.json();
-        // HERE API returns incidents in a 'results' array within 'response' or directly under 'incidents' depending on endpoint
-        return data.incidents || []; // Adjust based on actual HERE response structure if different
+        // HERE API returns incidents in the 'incidents' array directly at the root
+        return data.incidents || []; 
       } catch (error) {
         console.error("Error fetching HERE traffic data:", error);
         document.getElementById("incidents").textContent = "Error loading HERE traffic incidents.";
@@ -332,7 +333,7 @@
       // Sort by criticality (critical, major, minor)
       const criticalityOrder = { "critical": 1, "major": 2, "minor": 3, "low": 4 };
       list.sort((a, b) => {
-          const aCrit = criticalityOrder[a.criticality] || 99;
+          const aCrit = criticalityOrder[a.criticality] || 99; // Use default high value for unknown criticality
           const bCrit = criticalityOrder[b.criticality] || 99;
           return aCrit - bCrit;
       });
@@ -352,9 +353,12 @@
         // No specific emoji change for minor/low, remains default green
 
         const type = i.type?.replaceAll("_", " ").toLowerCase() || "incident";
-        // HERE API often provides description directly, no road numbers easily available directly in basic incident
         const desc = i.description || "No description available"; 
-        const roads = i.roadNames?.join(", ") || "Affected roads unclear"; // HERE might have 'roadNames' array or just in description
+        // HERE API incident objects may not always have a direct 'roadNames' array,
+        // often found within 'location' objects or just described in 'description'.
+        // For this general traffic, a more robust parsing might be needed if roadNames is critical.
+        // For now, let's try 'location.roadName' or fall back.
+        const roads = i.location?.roadName || "Affected roads unclear"; 
 
         const d = document.createElement("div");
         d.className = `item ${sev}`;
@@ -399,7 +403,7 @@
         }
 
         const desc = i.description || "No description available";
-        const roads = i.roadNames?.join(", ") || "Affected roads unclear";
+        const roads = i.location?.roadName || "Affected roads unclear";
 
         const d = document.createElement("div");
         d.className = `item ${sev}`;
@@ -413,127 +417,17 @@
       });
     }
 
-    // --- TfL Road Network Functions ---
-    async function fetchTfLRoadDisruptions() {
-      const url = `https://api.tfl.gov.uk/Road/All/Disruption?app_key=${TFL_KEY}`;
-      let allTfLDisruptions = [];
-      let tflTrafficIncidents = [];
-      let tflRoadworksIncidents = [];
-
-      try {
-        const resp = await fetch(url);
-        if (!resp.ok) {
-          throw new Error(`TfL Road Disruption API responded with status: ${resp.status} ${resp.statusText}`);
-        }
-        const data = await resp.json();
-        allTfLDisruptions = data.roadDisruptions || [];
-
-        allTfLDisruptions.forEach(incident => {
-          if (incident.point && !isNaN(parseFloat(incident.point.split(',')[0])) && !isNaN(parseFloat(incident.point.split(',')[1]))) {
-            const [lat, lon] = incident.point.split(',').map(Number);
-            if (isWithinBbox(lat, lon)) {
-              const isRoadwork = incident.category?.toLowerCase().includes('roadworks') || incident.category?.toLowerCase().includes('plannedworks') || incident.category?.toLowerCase().includes('works');
-
-              if (isRoadwork) {
-                tflRoadworksIncidents.push(incident);
-              } else {
-                tflTrafficIncidents.push(incident);
-              }
-            }
-          }
-        });
-        
-        return { tflTrafficIncidents, tflRoadworksIncidents };
-      } catch (error) {
-        console.error("Error fetching TfL road disruptions data:", error);
-        document.getElementById("tfl-traffic-incidents").textContent = "Error loading TfL traffic incidents.";
-        document.getElementById("tfl-roadworks-incidents").textContent = "Error loading TfL roadworks.";
-        return { tflTrafficIncidents: [], tflRoadworksIncidents: [] };
-      }
-    }
-
-    function renderTfLTraffic(list) {
-        const container = document.getElementById("tfl-traffic-incidents");
-        container.innerHTML = "";
-        if (!list.length) {
-            return container.innerHTML = "<p>No TfL traffic incidents reported for SE London.</p>";
-        }
-
-        const severityOrder = { "Serious": 1, "Major": 2, "Minor": 3, "Moderate": 4, "Normal": 5, "Good": 6 };
-        list.sort((a, b) => {
-            const aSev = severityOrder[a.severity] || 99;
-            const bSev = severityOrder[b.severity] || 99;
-            return aSev - bSev;
-        });
-
-        list.forEach(incident => {
-            const description = incident.comments || incident.location || "No description available";
-            const currentStatus = incident.currentStatus || "Status unknown";
-            const category = incident.category || "Incident";
-            const roadNames = incident.roadName || "Unnamed road";
-
-            let sevClass = "low"; 
-            let emoji = "🔵"; 
-            if (incident.severity === "Serious") {
-                sevClass = "high";
-                emoji = "🚨";
-            } else if (incident.severity === "Major" || incident.severity === "Minor") {
-                sevClass = "medium";
-                emoji = "🔶";
-            }
-
-            const d = document.createElement("div");
-            d.className = `item tfl-item ${sevClass}`; 
-            d.innerHTML = `
-                <strong>${emoji} ${roadNames}</strong> – 
-                <em>${category} (${currentStatus})</em><br>
-                ${description}
-                <br><small>Severity: ${incident.severity || 'Unknown'}</small>
-            `;
-            container.appendChild(d);
-        });
-    }
-
-    function renderTfLRoadworks(list) {
-        const container = document.getElementById("tfl-roadworks-incidents");
-        container.innerHTML = "";
-        if (!list.length) {
-            return container.innerHTML = "<p>No TfL roadworks reported for SE London.</p>";
-        }
-
-        const severityOrder = { "Serious": 1, "Major": 2, "Minor": 3, "Moderate": 4, "Normal": 5, "Good": 6 };
-        list.sort((a, b) => {
-            const aSev = severityOrder[a.severity] || 99;
-            const bSev = severityOrder[b.severity] || 99;
-            return aSev - bSev;
-        });
-
-        list.forEach(incident => {
-            const description = incident.comments || incident.location || "No description available";
-            const currentStatus = incident.currentStatus || "Status unknown";
-            const roadNames = incident.roadName || "Unnamed road";
-            let emoji = "🚧"; 
-
-            let sevClass = "low"; 
-            if (incident.severity === "Serious") {
-                sevClass = "high";
-            } else if (incident.severity === "Major" || incident.severity === "Minor") {
-                sevClass = "medium";
-            }
-
-            const d = document.createElement("div");
-            d.className = `item tfl-item tfl-roadwork-item ${sevClass}`; 
-            d.innerHTML = `
-                <strong>${emoji} ${roadNames}</strong> – 
-                <em>Roadwork (${currentStatus})</em><br>
-                ${description}
-                <br><small>Severity: ${incident.severity || 'Unknown'}</small>
-            `;
-            container.appendChild(d);
-        });
-    }
-
     // --- Public Transport Functions ---
+
+    // Moved this helper function definition to the top of its section
+    // so it's defined before any other functions try to call it.
+    async function fetchTfLStatus(lines) {
+      const url = `https://api.tfl.gov.uk/Line/${lines}/Status?app_key=${TFL_KEY}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`TfL API error: ${res.status} ${res.statusText}`);
+      return await res.json();
+    }
+
     // Helper to fetch TfL line statuses (Tube, Elizabeth, Overground)
     async function fetchTfLLineStatus(modes) {
         const url = `https://api.tfl.gov.uk/Line/Mode/${modes}/Status?app_key=${TFL_KEY}`;
