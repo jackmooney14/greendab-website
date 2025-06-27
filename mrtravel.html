@@ -11,7 +11,7 @@
       margin: auto;
       background: #fafafa;
     }
-    h1, h2 { text-align: center; }
+    h1, h2, h3 { text-align: center; } /* Center all headings */
     .section { margin-bottom: 2em; }
     .item { background: white; padding: 1em; margin-bottom: .8em; border-left: 6px solid; border-radius: 5px; }
     /* Existing severity colors */
@@ -27,8 +27,8 @@
     .tube-line-item strong {
         margin-right: 0.5em;
     }
-    /* Style for TfL traffic and roadworks - can be merged with .item if desired */
-    .tfl-item { /* A common class for all TfL road-related items */
+    /* Style for TfL traffic and roadworks */
+    .tfl-item {
       background: white;
       padding: 1em;
       margin-bottom: .8em;
@@ -43,9 +43,32 @@
         border-color: #5d4037; /* A distinct brown for roadworks */
     }
     .tfl-roadwork-item.high { border-color: #e53935; } /* Still use red for high severity */
+
+    /* Weather Forecast Styling */
+    #weather-forecast {
+        background: #e0f2f7; /* Light blue background */
+        padding: 1.5em;
+        margin-bottom: 2em;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 1.1em;
+        color: #01579b; /* Darker blue text */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #weather-forecast strong {
+        font-size: 1.3em;
+        color: #01579b;
+    }
+    #weather-forecast small {
+        display: block;
+        margin-top: 0.5em;
+        color: #0277bd;
+    }
   </style>
 </head>
 <body>
+  <div id="weather-forecast">Loading local weather forecast...</div>
+
   <h1>SE London Presenter Dashboard</h1>
 
   <div class="section" id="traffic">
@@ -83,15 +106,22 @@
   <script>
     const TOMTOM_KEY = "ZKntlBjAvEOBSRtfMsEdbo31b6UcmJHJ";
     const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
+    // --- YOUR OpenWeatherMap API Key ---
+    const OPENWEATHER_KEY = "c43b3437c0f093ed56bdc93a115e26a2"; 
 
     // Refresh interval for all data fetches (5 minutes)
     const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+    // Weather refresh interval (15 minutes - weather doesn't change as fast)
+    const WEATHER_REFRESH_INTERVAL_MS = 15 * 60 * 1000;
 
     // Coordinates for Southeast London (tlLat, tlLon, brLat, brLon)
     const bbox = {
       tlLat: 51.51, tlLon: -0.12,
       brLat: 51.30, brLon: 0.25
     };
+    // Central point for weather forecast (e.g., Greenwich)
+    const WEATHER_LAT = 51.48;
+    const WEATHER_LON = 0.0;
 
     // Helper to check if coordinates are within the SE London bbox
     function isWithinBbox(lat, lon) {
@@ -99,7 +129,65 @@
              lon >= bbox.tlLon && lon <= bbox.brLon;
     }
 
-    // --- TomTom Traffic Functions (unchanged) ---
+    // --- Weather Forecast Functions ---
+    async function fetchWeather() {
+      // OpenWeatherMap One Call API 3.0
+      const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${WEATHER_LAT}&lon=${WEATHER_LON}&exclude=minutely,hourly,alerts&units=metric&appid=${OPENWEATHER_KEY}`;
+      const container = document.getElementById("weather-forecast");
+
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          // Attempt to read error message from API if available
+          let errorText = await resp.text();
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorText = errorJson.message || errorText;
+          } catch (e) {
+            // Not JSON, use as is
+          }
+          throw new Error(`OpenWeatherMap API responded with status: ${resp.status} ${resp.statusText}. Message: ${errorText}`);
+        }
+        const data = await resp.json();
+        return data;
+      } catch (error) {
+        console.error("Error fetching weather data:", error);
+        container.textContent = `Error loading weather: ${error.message}. Please check your API key and network connection.`;
+        return null; // Return null to indicate failure
+      }
+    }
+
+    function renderWeather(weatherData) {
+        const container = document.getElementById("weather-forecast");
+        if (!weatherData) {
+            // Error message already set by fetchWeather
+            return;
+        }
+
+        const current = weatherData.current;
+        // Daily forecast for 'today' is the first element in the daily array
+        const todayForecast = weatherData.daily[0];
+
+        if (!current || !todayForecast) {
+            container.textContent = "Weather data incomplete. Please try again.";
+            return;
+        }
+
+        const description = current.weather[0].description;
+        const currentTemp = Math.round(current.temp);
+        const highTemp = Math.round(todayForecast.temp.max);
+        const lowTemp = Math.round(todayForecast.temp.min);
+        const feelsLike = Math.round(current.feels_like);
+
+        const forecastText = `
+            Good morning. Currently, the weather in Southeast London is ${description} with a temperature of ${currentTemp}°C, feeling like ${feelsLike}°C.
+            Today, expect a high of ${highTemp}°C and a low of ${lowTemp}°C.
+        `;
+
+        container.innerHTML = forecastText;
+    }
+
+    // --- TomTom Traffic Functions ---
     async function fetchTraffic() {
       const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${bbox.tlLat},${bbox.tlLon},${bbox.brLat},${bbox.brLon}&fields=roadNumbers,events&language=en-GB&key=${TOMTOM_KEY}`;
       try {
@@ -192,8 +280,7 @@
       });
     }
 
-    // --- NEW/MODIFIED: TfL Road Network Functions ---
-    // This function now fetches all disruptions and categorizes them
+    // --- TfL Road Network Functions ---
     async function fetchTfLRoadDisruptions() {
       const url = `https://api.tfl.gov.uk/Road/All/Disruption?app_key=${TFL_KEY}`;
       let allTfLDisruptions = [];
@@ -208,18 +295,15 @@
         const data = await resp.json();
         allTfLDisruptions = data.roadDisruptions || [];
 
-        // Filter by bbox for South East London and categorize
         allTfLDisruptions.forEach(incident => {
           if (incident.point && !isNaN(parseFloat(incident.point.split(',')[0])) && !isNaN(parseFloat(incident.point.split(',')[1]))) {
             const [lat, lon] = incident.point.split(',').map(Number);
             if (isWithinBbox(lat, lon)) {
-              // Categorize based on 'category' field
               const isRoadwork = incident.category?.toLowerCase().includes('roadworks') || incident.category?.toLowerCase().includes('plannedworks') || incident.category?.toLowerCase().includes('works');
 
               if (isRoadwork) {
                 tflRoadworksIncidents.push(incident);
               } else {
-                // All other disruptions (accidents, events etc.) go to general traffic
                 tflTrafficIncidents.push(incident);
               }
             }
@@ -235,7 +319,6 @@
       }
     }
 
-    // New render function for TfL general traffic incidents
     function renderTfLTraffic(list) {
         const container = document.getElementById("tfl-traffic-incidents");
         container.innerHTML = "";
@@ -278,7 +361,6 @@
         });
     }
 
-    // New render function for TfL Roadworks
     function renderTfLRoadworks(list) {
         const container = document.getElementById("tfl-roadworks-incidents");
         container.innerHTML = "";
@@ -297,7 +379,6 @@
             const description = incident.comments || incident.location || "No description available";
             const currentStatus = incident.currentStatus || "Status unknown";
             const roadNames = incident.roadName || "Unnamed road";
-            // Roadworks emoji
             let emoji = "🚧"; 
 
             let sevClass = "low"; 
@@ -308,7 +389,7 @@
             }
 
             const d = document.createElement("div");
-            d.className = `item tfl-item tfl-roadwork-item ${sevClass}`; // Use tfl-roadwork-item for distinct styling
+            d.className = `item tfl-item tfl-roadwork-item ${sevClass}`; 
             d.innerHTML = `
                 <strong>${emoji} ${roadNames}</strong> – 
                 <em>Roadwork (${currentStatus})</em><br>
@@ -319,23 +400,7 @@
         });
     }
 
-    // --- Unified Traffic Update ---
-    async function updateTraffic() {
-      // TomTom Traffic
-      const tomtomIncidents = await fetchTraffic();
-      renderTraffic(tomtomIncidents);
-      renderRoadworksToday(tomtomIncidents); // Roadworks still from TomTom
-
-      // TfL Road Disruptions (now categorized)
-      const { tflTrafficIncidents, tflRoadworksIncidents } = await fetchTfLRoadDisruptions();
-      renderTfLTraffic(tflTrafficIncidents);
-      renderTfLRoadworks(tflRoadworksIncidents); // Render TfL specific roadworks
-
-      setTimeout(updateTraffic, REFRESH_INTERVAL_MS);
-    }
-    updateTraffic(); 
-
-    // --- TfL Public Transport Functions (unchanged from last update) ---
+    // --- TfL Public Transport Functions ---
     async function fetchTfLStatus(lines) {
       const url = `https://api.tfl.gov.uk/Line/${lines}/Status?app_key=${TFL_KEY}`;
       const res = await fetch(url);
@@ -447,12 +512,37 @@
       }
     }
 
-    async function updateTfL() {
+    // --- Main Update Functions ---
+    async function updateTraffic() {
+      // TomTom Traffic
+      const tomtomIncidents = await fetchTraffic();
+      renderTraffic(tomtomIncidents);
+      renderRoadworksToday(tomtomIncidents); // Roadworks still from TomTom
+
+      // TfL Road Disruptions (now categorized)
+      const { tflTrafficIncidents, tflRoadworksIncidents } = await fetchTfLRoadDisruptions();
+      renderTfLTraffic(tflTrafficIncidents);
+      renderTfLRoadworks(tflRoadworksIncidents); // Render TfL specific roadworks
+
+      setTimeout(updateTraffic, REFRESH_INTERVAL_MS);
+    }
+    
+    async function updateTfL() { // This function handles public transport updates
       await fetchAndRenderTubeStatus();
       await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus");
       await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry");
       setTimeout(updateTfL, REFRESH_INTERVAL_MS);
     }
+
+    async function updateWeatherForecast() {
+        const weatherData = await fetchWeather();
+        renderWeather(weatherData);
+        setTimeout(updateWeatherForecast, WEATHER_REFRESH_INTERVAL_MS);
+    }
+
+    // Initial calls for all data
+    updateWeatherForecast();
+    updateTraffic();
     updateTfL();
   </script>
 </body>
