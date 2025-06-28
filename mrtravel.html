@@ -601,6 +601,7 @@
       const hereIncidents = await fetchTraffic(); // Now fetches from HERE
       renderTraffic(hereIncidents);
       renderRoadworksToday(hereIncidents); // Roadworks also from HERE
+      renderTrafficBulletin(hereIncidents);
 
       const { tflTrafficIncidents, tflRoadworksIncidents } = await fetchTfLRoadDisruptions();
       renderTfLTraffic(tflTrafficIncidents);
@@ -626,6 +627,29 @@
     updateWeatherForecast();
     updateTraffic();
     updateTfL(); 
-  </script>
+  
+    function renderTrafficBulletin(incidents) {
+      const bulletinContainer = document.createElement("div");
+      bulletinContainer.id = "bulletin";
+      bulletinContainer.className = "section";
+      const summary = incidents
+        .filter(i => ["critical", "major"].includes(i.criticality))
+        .map(i => {
+          const road = i.location?.roadName || "an unknown road";
+          const type = (i.type || "incident").replaceAll("_", " ").toLowerCase();
+          const desc = i.description || "details not available";
+          return `⚠️ ${type.charAt(0).toUpperCase() + type.slice(1)} on ${road}: ${desc}.`;
+        });
+
+      bulletinContainer.innerHTML = `
+        <h2>🎙️ Travel Bulletin Summary</h2>
+        ${summary.length ? summary.map(s => `<p>${s}</p>`).join("") : "<p>No major incidents to report.</p>"}
+      `;
+
+      const main = document.querySelector("#traffic");
+      main.insertBefore(bulletinContainer, main.children[2]); // After headline
+    }
+
+</script>
 </body>
 </html>
