@@ -64,6 +64,27 @@
         margin-top: 0.5em;
         color: #0277bd;
     }
+
+    /* Traffic Bulletin Styling */
+    #bulletin {
+        background: #fff3e0; /* Light orange/yellow background */
+        padding: 1.5em;
+        margin-bottom: 2em;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: left; /* Align text left for readability */
+        font-size: 1.1em;
+        color: #e65100; /* Darker orange text */
+    }
+    #bulletin h2 {
+        color: #e65100;
+        margin-top: 0;
+        text-align: center;
+    }
+    #bulletin p {
+        margin-bottom: 0.5em;
+        line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -104,7 +125,7 @@
   </div>
 
   <script>
-    const HERE_KEY = "k0PsupgE69Ez6BBh1sq59928cQ6Py7RLLtEvirAjz-o"; // Replaced TOMTOM_KEY with HERE_KEY
+    const HERE_KEY = "k0PsupgE69Ez6BBh1sq59928cQ6Py7RLLtEvirAjz-o";
     const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
     const OPENWEATHER_KEY = "c43b3437c0f093ed56bdc93a115e26a2"; 
 
@@ -125,8 +146,8 @@
       brLat: 51.30, brLon: 0.25
     };
     // Central point for weather forecast (e.g., Greenwich)
-    const WEATHER_LAT = 51.4821;
-    const WEATHER_LON = 0.0058;
+    const WEATHER_LAT = 51.48;
+    const WEATHER_LON = 0.0;
 
     // List of relevant SE London stations (CRS codes) for National Rail
     const SE_LONDON_RAIL_STATIONS = [
@@ -356,8 +377,6 @@
         const desc = i.description || "No description available"; 
         // HERE API incident objects may not always have a direct 'roadNames' array,
         // often found within 'location' objects or just described in 'description'.
-        // For this general traffic, a more robust parsing might be needed if roadNames is critical.
-        // For now, let's try 'location.roadName' or fall back.
         const roads = i.location?.roadName || "Affected roads unclear"; 
 
         const d = document.createElement("div");
@@ -596,12 +615,43 @@
       }
     }
 
+    // --- NEW: Traffic Bulletin Function ---
+    function renderTrafficBulletin(incidents) {
+      // Find the main traffic section to insert the bulletin
+      const trafficSection = document.getElementById("traffic");
+      let bulletinContainer = document.getElementById("bulletin");
+
+      // Create bulletin container if it doesn't exist
+      if (!bulletinContainer) {
+        bulletinContainer = document.createElement("div");
+        bulletinContainer.id = "bulletin";
+        bulletinContainer.className = "section"; // Use section class for consistent spacing
+        // Insert it after the main H2 but before the HERE traffic H3
+        trafficSection.insertBefore(bulletinContainer, trafficSection.children[1]); 
+      }
+
+      // Filter for major/critical incidents from HERE API
+      const majorIncidents = incidents
+        .filter(i => ["critical", "major"].includes(i.criticality))
+        .map(i => {
+          const road = i.location?.roadName || "an unknown road";
+          const type = (i.type || "incident").replaceAll("_", " ").toLowerCase();
+          const desc = i.description || "details not available";
+          return `⚠️ ${type.charAt(0).toUpperCase() + type.slice(1)} on ${road}: ${desc}.`;
+        });
+
+      bulletinContainer.innerHTML = `
+        <h2>🎙️ Travel Bulletin Summary</h2>
+        ${majorIncidents.length ? majorIncidents.map(s => `<p>${s}</p>`).join("") : "<p>No major incidents to report from HERE Traffic.</p>"}
+      `;
+    }
+
     // --- Main Update Functions ---
     async function updateTraffic() {
       const hereIncidents = await fetchTraffic(); // Now fetches from HERE
       renderTraffic(hereIncidents);
       renderRoadworksToday(hereIncidents); // Roadworks also from HERE
-      renderTrafficBulletin(hereIncidents);
+      renderTrafficBulletin(hereIncidents); // Render the traffic bulletin
 
       const { tflTrafficIncidents, tflRoadworksIncidents } = await fetchTfLRoadDisruptions();
       renderTfLTraffic(tflTrafficIncidents);
@@ -627,29 +677,6 @@
     updateWeatherForecast();
     updateTraffic();
     updateTfL(); 
-  
-    function renderTrafficBulletin(incidents) {
-      const bulletinContainer = document.createElement("div");
-      bulletinContainer.id = "bulletin";
-      bulletinContainer.className = "section";
-      const summary = incidents
-        .filter(i => ["critical", "major"].includes(i.criticality))
-        .map(i => {
-          const road = i.location?.roadName || "an unknown road";
-          const type = (i.type || "incident").replaceAll("_", " ").toLowerCase();
-          const desc = i.description || "details not available";
-          return `⚠️ ${type.charAt(0).toUpperCase() + type.slice(1)} on ${road}: ${desc}.`;
-        });
-
-      bulletinContainer.innerHTML = `
-        <h2>🎙️ Travel Bulletin Summary</h2>
-        ${summary.length ? summary.map(s => `<p>${s}</p>`).join("") : "<p>No major incidents to report.</p>"}
-      `;
-
-      const main = document.querySelector("#traffic");
-      main.insertBefore(bulletinContainer, main.children[2]); // After headline
-    }
-
-</script>
+  </script>
 </body>
 </html>
