@@ -88,11 +88,6 @@
     .suffragette { background-color: #38a68d; color: white; }
     .weaver { background-color: #8a1d60; color: white; }
     .windrush { background-color: #d1384b; color: white; }
-
-    /* Tube Issues special style */
-    #tube-issues-output .line-status {
-      border-left: 6px solid #d1384b;
-    }
   </style>
 </head>
 <body>
@@ -103,10 +98,6 @@
       <div id="tfl-output">
         <p>Loading TfL status...</p>
       </div>
-      <div id="tube-issues-output" style="margin-top: 40px;">
-        <h2>Current Tube Issues</h2>
-        <p>Loading Tube issues...</p>
-      </div>
     </div>
     <div id="nr-output">
       <h2>National Rail & River</h2>
@@ -114,9 +105,22 @@
     </div>
   </div>
 
-  <div id="nr-issues-output" style="margin-top: 40px;"></div>
+  <div id="nr-issues-output" style="margin-top: 40px;">
+    <h3>National Rail Delays on Selected Routes</h3>
+    <p>Loading delay info...</p>
+  </div>
 
   <script>
+    // Stations to filter on (case-insensitive search)
+    const relevantStations = ["CHX", "CST", "LBG", "Greenwich", "Eltham", "Sidcup", "Bromley"];
+
+    // Helper: checks if a text mentions any of the stations
+    function mentionsRelevantStation(text) {
+      if (!text) return false;
+      const lowerText = text.toLowerCase();
+      return relevantStations.some(station => lowerText.includes(station.toLowerCase()));
+    }
+
     const lineCssClasses = {
       "Bakerloo": "bakerloo",
       "Central": "central",
@@ -168,48 +172,6 @@
       }
     }
 
-    async function fetchTubeIssues() {
-      const output = document.getElementById("tube-issues-output");
-      output.innerHTML = "<h2>Current Tube Issues</h2><p>Loading Tube issues...</p>";
-
-      try {
-        const res = await fetch("https://api.tfl.gov.uk/line/mode/tube/status");
-        const data = await res.json();
-
-        // Filter lines with status not 'Good Service'
-        const issues = data.filter(line => {
-          const status = line.lineStatuses?.[0]?.statusSeverityDescription || "";
-          return !status.toLowerCase().includes("good");
-        });
-
-        if (issues.length === 0) {
-          output.innerHTML = "<h2>Current Tube Issues</h2><p>No current Tube issues reported.</p>";
-          return;
-        }
-
-        let html = "<h2>Current Tube Issues</h2>";
-        issues.forEach(line => {
-          const lineName = line.name;
-          const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown issue";
-          const reason = line.lineStatuses?.[0]?.reason || "";
-
-          html += `
-            <div class="line-status">
-              <div class="line-name ${lineCssClasses[lineName] || ""}">${lineName}</div>
-              <div class="status-text status-severe">
-                <strong>${status}</strong>${reason ? ": " + reason : ""}
-              </div>
-            </div>
-          `;
-        });
-
-        output.innerHTML = html;
-      } catch (err) {
-        output.innerHTML = "<h2>Current Tube Issues</h2><p>Error loading Tube issues.</p>";
-        console.error(err);
-      }
-    }
-
     async function fetchNationalRailStatus() {
       const output = document.getElementById("nr-output");
       output.innerHTML = "<h2>National Rail & River</h2>";
@@ -237,9 +199,10 @@
       });
     }
 
-    async function fetchNationalRailIssues() {
+    // Fetch & filter National Rail delay info for specified stations
+    async function fetchNationalRailDelays() {
       const issuesContainer = document.getElementById("nr-issues-output");
-      issuesContainer.innerHTML = "<p>Loading National Rail issues...</p>";
+      issuesContainer.innerHTML = "<p>Loading National Rail delay info...</p>";
 
       try {
         const response = await fetch(
@@ -262,30 +225,39 @@
         const xmlDoc = parser.parseFromString(xmlText, "application/xml");
         const indicators = xmlDoc.getElementsByTagName("serviceIndicator");
 
-        if (indicators.length === 0) {
-          issuesContainer.innerHTML = "<p>No current National Rail issues found.</p>";
+        // Filter only indicators mentioning relevant stations
+        const filteredIndicators = [];
+        for (let i = 0; i < indicators.length; i++) {
+          const indicator = indicators[i];
+          const description = indicator.getElementsByTagName("description")[0]?.textContent || "";
+          const status = indicator.getElementsByTagName("status")[0]?.textContent || "";
+          const lineName = indicator.getElementsByTagName("lineName")[0]?.textContent || "General";
+
+          // Check if description or lineName mentions any of the relevant stations
+          if (mentionsRelevantStation(description) || mentionsRelevantStation(lineName)) {
+            filteredIndicators.push({lineName, status, description});
+          }
+        }
+
+        if (filteredIndicators.length === 0) {
+          issuesContainer.innerHTML = "<p>No delays or issues on selected routes currently.</p>";
           return;
         }
 
-        let html = "<h3>National Rail Issues / Delays</h3>";
+        let html = "";
 
-        for (let i = 0; i < indicators.length; i++) {
-          const indicator = indicators[i];
-          const description = indicator.getElementsByTagName("description")[0]?.textContent || "No description";
-          const status = indicator.getElementsByTagName("status")[0]?.textContent || "Unknown status";
-          const lineName = indicator.getElementsByTagName("lineName")[0]?.textContent || "General";
-
+        filteredIndicators.forEach(({lineName, status, description}) => {
           html += `
             <div class="line-status">
               <div class="line-name national-rail">${lineName}</div>
               <div class="status-text status-severe">${status}: ${description}</div>
             </div>`;
-        }
+        });
 
         issuesContainer.innerHTML = html;
 
       } catch (error) {
-        issuesContainer.innerHTML = "<p>Error loading National Rail issues.</p>";
+        issuesContainer.innerHTML = "<p>Error loading National Rail delay info.</p>";
         console.error("National Rail API error:", error);
       }
     }
@@ -293,8 +265,7 @@
     function refreshAll() {
       fetchTfLStatus();
       fetchNationalRailStatus();
-      fetchNationalRailIssues();
-      fetchTubeIssues();
+      fetchNationalRailDelays();
     }
 
     window.onload = () => {
