@@ -88,6 +88,11 @@
     .suffragette { background-color: #38a68d; color: white; }
     .weaver { background-color: #8a1d60; color: white; }
     .windrush { background-color: #d1384b; color: white; }
+
+    /* Tube Issues special style */
+    #tube-issues-output .line-status {
+      border-left: 6px solid #d1384b;
+    }
   </style>
 </head>
 <body>
@@ -97,6 +102,10 @@
       <h2>TfL Service Status</h2>
       <div id="tfl-output">
         <p>Loading TfL status...</p>
+      </div>
+      <div id="tube-issues-output" style="margin-top: 40px;">
+        <h2>Current Tube Issues</h2>
+        <p>Loading Tube issues...</p>
       </div>
     </div>
     <div id="nr-output">
@@ -155,6 +164,48 @@
         });
       } catch (err) {
         output.innerHTML = "<p>Error loading TfL data.</p>";
+        console.error(err);
+      }
+    }
+
+    async function fetchTubeIssues() {
+      const output = document.getElementById("tube-issues-output");
+      output.innerHTML = "<h2>Current Tube Issues</h2><p>Loading Tube issues...</p>";
+
+      try {
+        const res = await fetch("https://api.tfl.gov.uk/line/mode/tube/status");
+        const data = await res.json();
+
+        // Filter lines with status not 'Good Service'
+        const issues = data.filter(line => {
+          const status = line.lineStatuses?.[0]?.statusSeverityDescription || "";
+          return !status.toLowerCase().includes("good");
+        });
+
+        if (issues.length === 0) {
+          output.innerHTML = "<h2>Current Tube Issues</h2><p>No current Tube issues reported.</p>";
+          return;
+        }
+
+        let html = "<h2>Current Tube Issues</h2>";
+        issues.forEach(line => {
+          const lineName = line.name;
+          const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown issue";
+          const reason = line.lineStatuses?.[0]?.reason || "";
+
+          html += `
+            <div class="line-status">
+              <div class="line-name ${lineCssClasses[lineName] || ""}">${lineName}</div>
+              <div class="status-text status-severe">
+                <strong>${status}</strong>${reason ? ": " + reason : ""}
+              </div>
+            </div>
+          `;
+        });
+
+        output.innerHTML = html;
+      } catch (err) {
+        output.innerHTML = "<h2>Current Tube Issues</h2><p>Error loading Tube issues.</p>";
         console.error(err);
       }
     }
@@ -243,6 +294,7 @@
       fetchTfLStatus();
       fetchNationalRailStatus();
       fetchNationalRailIssues();
+      fetchTubeIssues();
     }
 
     window.onload = () => {
