@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stereo Audio Meters with Loudness Warning</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+      text-align: center;
+      padding-top: 2em;
+    }
+    .meter-container {
+      display: flex;
+      justify-content: center;
+      gap: 2em;
+      margin-top: 2em;
+    }
+    canvas {
+      background: #222;
+      border-radius: 8px;
+    }
+    #warning {
+      margin-top: 1em;
+      font-size: 1.5em;
+      color: red;
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stereo Audio Meters</h1>
+  <p>Listening to live audio input...</p>
+  <div class="meter-container">
+    <canvas id="leftMeter" width="20" height="200"></canvas>
+    <canvas id="rightMeter" width="20" height="200"></canvas>
+  </div>
+  <div id="warning">⚠️ Loudness Warning!</div>
+
+  <script>
+    async function startAudio() {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createMediaStreamSource(stream);
+
+      const splitter = audioCtx.createChannelSplitter(2);
+      const analyserL = audioCtx.createAnalyser();
+      const analyserR = audioCtx.createAnalyser();
+      analyserL.fftSize = analyserR.fftSize = 256;
+
+      source.connect(splitter);
+      splitter.connect(analyserL, 0);
+      splitter.connect(analyserR, 1);
+
+      const canvasL = document.getElementById('leftMeter');
+      const canvasR = document.getElementById('rightMeter');
+      const ctxL = canvasL.getContext('2d');
+      const ctxR = canvasR.getContext('2d');
+      const bufferLength = analyserL.frequencyBinCount;
+      const dataArrayL = new Uint8Array(bufferLength);
+      const dataArrayR = new Uint8Array(bufferLength);
+      const warning = document.getElementById('warning');
+
+      function drawMeter(ctx, value, width, height) {
+        ctx.clearRect(0, 0, width, height);
+        const barHeight = (value / 255) * height;
+        const y = height - barHeight;
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, '#0f0');
+        gradient.addColorStop(0.7, '#ff0');
+        gradient.addColorStop(1, '#f00');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, y, width, barHeight);
+      }
+
+      function update() {
+        analyserL.getByteTimeDomainData(dataArrayL);
+        analyserR.getByteTimeDomainData(dataArrayR);
+
+        const rmsL = Math.sqrt(dataArrayL.reduce((sum, v) => sum + (v - 128) ** 2, 0) / bufferLength);
+        const rmsR = Math.sqrt(dataArrayR.reduce((sum, v) => sum + (v - 128) ** 2, 0) / bufferLength);
+        const volumeL = rmsL * 2;
+        const volumeR = rmsR * 2;
+
+        drawMeter(ctxL, volumeL * 255, canvasL.width, canvasL.height);
+        drawMeter(ctxR, volumeR * 255, canvasR.width, canvasR.height);
+
+        if (volumeL > 0.7 || volumeR > 0.7) {
+          warning.style.visibility = 'visible';
+        } else {
+          warning.style.visibility = 'hidden';
+        }
+
+        requestAnimationFrame(update);
+      }
+
+      update();
+    }
+
+    startAudio().catch(err => {
+      alert('Microphone access is required: ' + err.message);
+    });
+  </script>
+</body>
+</html>
