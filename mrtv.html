@@ -124,10 +124,11 @@
     }
   </style>
 
-  <!-- Video.js library -->
+  <!-- Video.js libraries -->
   <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.0.2/dist/videojs-http-streaming.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-dash@5.1.1/dist/videojs-dash.min.js"></script>
 </head>
 <body>
 
@@ -154,6 +155,9 @@
             class="video-js vjs-default-skin"
             controls
             preload="auto"
+            autoplay
+            muted
+            playsinline
           ></video>
         </div>
         <div class="video-wrapper">
@@ -163,6 +167,9 @@
             class="video-js vjs-default-skin"
             controls
             preload="auto"
+            autoplay
+            muted
+            playsinline
           ></video>
         </div>
       </div>
@@ -189,7 +196,6 @@
     function getWeatherData(location) {
       const { lat, lon } = location.coordinates;
       const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
-
       fetch(url)
         .then(response => response.json())
         .then(data => displayWeather(location.name, data))
@@ -227,19 +233,25 @@
     setInterval(() => location.reload(), 8 * 60 * 60 * 1000); // Backup reload every 8 hours
 
     // Initialize Video.js players
-    const bbcPlayer = videojs('bbcPlayer');
-    bbcPlayer.src({
-      src: 'http://a.files.bbci.co.uk/media/live/manifesto/audio_video/simulcast/hls/uk/abr_hdtv/ak/bbc_news24.m3u8',
-      type: 'application/x-mpegURL'
-    });
-    bbcPlayer.play();
+    function initVideoPlayers() {
+      // BBC News (DASH)
+      const bbcPlayer = videojs('bbcPlayer', { fluid: true });
+      bbcPlayer.src({
+        src: 'https://vs-cmaf-push-uk-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/iptv_hd_abr_v1_hevc.mpd',
+        type: 'application/dash+xml'
+      });
+      bbcPlayer.play().catch(() => console.warn('BBC autoplay prevented by browser'));
 
-    const skyPlayer = videojs('skyPlayer');
-    skyPlayer.src({
-      src: 'https://linear417-gb-hls1-prd-ak.cdn.skycdp.com/100e/Content/HLS_001_1080_30/Live/channel(skynews)/03_1080-30.m3u8',
-      type: 'application/x-mpegURL'
-    });
-    skyPlayer.play();
+      // Sky News (HLS)
+      const skyPlayer = videojs('skyPlayer', { fluid: true });
+      skyPlayer.src({
+        src: 'https://linear417-gb-hls1-prd-ak.cdn.skycdp.com/100e/Content/HLS_001_1080_30/Live/channel(skynews)/03_1080-30.m3u8',
+        type: 'application/x-mpegURL'
+      });
+      skyPlayer.play().catch(() => console.warn('Sky autoplay prevented by browser'));
+    }
+
+    document.addEventListener('DOMContentLoaded', initVideoPlayers);
   </script>
 
 </body>
