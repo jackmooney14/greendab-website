@@ -87,10 +87,10 @@
     }
 
     .video-wrapper {
-      flex: 1; /* each video takes half of video-container height */
+      flex: 0 0 25%; /* each video takes 25% of video-container height */
       display: flex;
       flex-direction: column;
-      max-height: calc((100% - 10px) / 2); /* Set max height to half of the container, minus gap */
+      min-height: 0;
     }
 
     .video-wrapper h3 {
@@ -209,18 +209,9 @@
     scheduleMidnightReload();
     setInterval(() => location.reload(), 8 * 60 * 60 * 1000); // Backup reload every 8 hours
 
-    // Adjust video container height to match weather grid
-    function matchVideoHeight() {
-      const weatherHeight = document.getElementById('weather-container').offsetHeight;
-      document.getElementById('video-container').style.height = weatherHeight + 'px';
-    }
-
-    window.addEventListener('load', matchVideoHeight);
-    window.addEventListener('resize', matchVideoHeight);
-
     // Initialize Video.js players
     function initVideoPlayers() {
-      // BBC News (DASH)
+      // BBC News (HLS)
       const bbcPlayer = videojs('bbcPlayer', { fluid: true });
       bbcPlayer.src({
         src: 'https://vs-cmaf-push-uk-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/iptv_hd_abr_v1_hevc.mpd',
