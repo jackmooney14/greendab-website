@@ -52,7 +52,7 @@
 
     #weather-locations {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 16px;
     }
 
@@ -90,7 +90,7 @@
     }
 
     .video-wrapper {
-      flex: 0 0 30%; /* Set video container height to 30% of the video stack */
+      flex: 1;
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -238,8 +238,8 @@
       // BBC News (HLS)
       const bbcPlayer = videojs('bbcPlayer', { fluid: true });
       bbcPlayer.src({
-        src: 'https://vs-hls-push-ww.live.cf.md.bbci.co.uk/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/t=3840/v=pv14/b=5070016/main.m3u8',
-        type: 'application/x-mpegURL'
+        src: 'https://vs-cmaf-push-uk-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/iptv_hd_abr_v1_hevc.mpd',
+        type: 'application/dash+xml'
       });
       bbcPlayer.play().catch(() => console.warn('BBC autoplay prevented by browser'));
 
