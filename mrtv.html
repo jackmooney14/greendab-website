@@ -238,8 +238,8 @@
       // BBC News (HLS)
       const bbcPlayer = videojs('bbcPlayer', { fluid: true });
       bbcPlayer.src({
-        src: 'https://vs-cmaf-push-uk-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/iptv_hd_abr_v1_hevc.mpd',
-        type: 'application/dash+xml'
+        src: 'https://vs-hls-push-ww.live.cf.md.bbci.co.uk/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/t=3840/v=pv14/b=5070016/main.m3u8',
+        type: 'application/x-mpegURL'
       });
       bbcPlayer.play().catch(() => console.warn('BBC autoplay prevented by browser'));
 
