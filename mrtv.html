@@ -13,8 +13,8 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      height: 1290px; /* limit total height */
-      width: 1080px; /* limit width */
+      height: 100vh;
+      width: 100vw;
       overflow: hidden;
     }
 
@@ -23,8 +23,8 @@
       width: 100%;
       height: 100%;
       gap: 20px;
-      max-width: 1080px;
-      max-height: 1290px;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
     #weather-container {
@@ -35,6 +35,8 @@
       border-radius: 12px;
       padding: 20px;
       overflow-y: auto;
+      height: 100%;
+      box-sizing: border-box;
     }
 
     #video-container {
@@ -42,24 +44,22 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
+      height: 100%;
+      box-sizing: border-box;
     }
 
     #video-stack {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 20px;
       height: 100%;
     }
 
     .video-wrapper {
-      flex: 1; /* each video takes half of video-container height */
+      flex: 1;
       display: flex;
       flex-direction: column;
-    }
-
-    .video-wrapper h3 {
-      margin: 0 0 5px 0;
-      font-size: 1.1em;
+      min-height: 0;
     }
 
     .video-js {
@@ -90,7 +90,6 @@
       <h2>Live News Streams</h2>
       <div id="video-stack">
         <div class="video-wrapper">
-          <h3>BBC News</h3>
           <video
             id="bbcPlayer"
             class="video-js vjs-default-skin"
@@ -102,7 +101,6 @@
           ></video>
         </div>
         <div class="video-wrapper">
-          <h3>Sky News</h3>
           <video
             id="skyPlayer"
             class="video-js vjs-default-skin"
@@ -172,15 +170,6 @@
     }
     scheduleMidnightReload();
     setInterval(() => location.reload(), 8 * 60 * 60 * 1000); // Backup reload every 8 hours
-
-    // Adjust video container height to match weather grid
-    function matchVideoHeight() {
-      const weatherHeight = document.getElementById('weather-container').offsetHeight;
-      document.getElementById('video-container').style.height = weatherHeight + 'px';
-    }
-
-    window.addEventListener('load', matchVideoHeight);
-    window.addEventListener('resize', matchVideoHeight);
 
     // Initialize Video.js players
     function initVideoPlayers() {
