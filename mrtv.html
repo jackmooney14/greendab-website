@@ -72,15 +72,13 @@
       margin-top: 3px;
     }
 
+    /* Video container */
     #video-container {
       flex: 1;
       padding: 20px;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
-      background-color: #111;
-      border-radius: 12px;
       gap: 20px;
     }
 
@@ -92,7 +90,7 @@
     }
 
     .video-wrapper {
-      flex: 1; /* Equal height for stacked videos */
+      height: 50%; /* Each video takes half of container */
       display: flex;
       flex-direction: column;
     }
@@ -104,7 +102,7 @@
 
     .video-js {
       width: 100%;
-      flex: 1; /* Fill remaining height of wrapper */
+      height: 100%;
       border-radius: 10px;
     }
 
@@ -237,6 +235,15 @@
     }
     scheduleMidnightReload();
     setInterval(() => location.reload(), 8 * 60 * 60 * 1000); // Backup reload every 8 hours
+
+    // Adjust video container height to match weather grid
+    function matchVideoHeight() {
+      const weatherHeight = document.getElementById('weather-container').offsetHeight;
+      document.getElementById('video-container').style.height = weatherHeight + 'px';
+    }
+
+    window.addEventListener('load', matchVideoHeight);
+    window.addEventListener('resize', matchVideoHeight);
 
     // Initialize Video.js players
     function initVideoPlayers() {
