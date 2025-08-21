@@ -29,12 +29,47 @@
 
     #weather-container {
       width: 35%;
+      padding: 20px;
+      overflow-y: auto;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       background-color: #111;
       border-radius: 12px;
-      padding: 20px;
-      overflow-y: auto;
+      max-height: 100%;
+    }
+
+    #weather-container h2 {
+      font-size: 1.5em;
+      margin: 0 0 10px 0;
+    }
+
+    #weather-bulletin {
+      margin-bottom: 10px;
+      font-size: 1em;
+    }
+
+    #weather-locations {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .location {
+      background-color: #1c1c1c;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.95em;
+    }
+
+    .location-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 1.1em;
+    }
+
+    .weather-info {
+      margin-top: 3px;
     }
 
     #video-container {
