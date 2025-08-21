@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Video and Weather</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      height: 100vh;
+      margin: 0;
+      background-color: #000;
+      color: white;
+      overflow: hidden;
+    }
+
+    #main-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1920px;
+      height: 100%;
+      gap: 20px;
+    }
+
+    #weather-container {
+      width: 35%;
+      padding: 20px;
+      overflow-y: auto;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      background-color: #111;
+      border-radius: 12px;
+      max-height: 100%;
+    }
+
+    #weather-container h2 {
+      font-size: 1.5em;
+      margin: 0 0 10px 0;
+    }
+
+    #weather-bulletin {
+      margin-bottom: 10px;
+      font-size: 1em;
+    }
+
+    #weather-locations {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .location {
+      background-color: #1c1c1c;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.95em;
+    }
+
+    .location-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 1.1em;
+    }
+
+    .weather-info {
+      margin-top: 3px;
+    }
+
+    #video-container {
+      flex: 1;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    #video-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      height: 100%;
+    }
+
+    .video-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .video-wrapper h3 {
+      margin: 0 0 5px 0;
+      font-size: 1.1em;
+    }
+
+    .video-js {
+      width: 100%;
+      height: 100%;
+      border-radius: 10px;
+    }
+
+    @media screen and (max-width: 1080px) {
+      #main-container {
+        flex-direction: column;
+      }
+
+      #weather-container,
+      #video-container {
+        width: 100%;
+        height: auto;
+        margin-bottom: 20px;
+      }
+
+      #weather-locations {
+        grid-template-columns: 1fr;
+      }
+
+      .video-js {
+        height: 300px;
+      }
+    }
+  </style>
+
+  <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+  <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.0.2/dist/videojs-http-streaming.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/videojs-contrib-dash@5.1.1/dist/videojs-dash.min.js"></script>
+</head>
+<body>
+
+  <div id="main-container">
+    <div id="weather-container">
+      <h2>Weather Update</h2>
+      <div id="weather-bulletin">
+        <p>Current weather in the areas surrounding Greenwich:</p>
+      </div>
+      <div id="weather-locations">
+        </div>
+    </div>
+
+    <div id="video-container">
+      <h2>Live News Streams</h2>
+      <div id="video-stack">
+        <div class="video-wrapper">
+          <h3>BBC News</h3>
+          <video
+            id="bbcPlayer"
+            class="video-js vjs-default-skin"
+            controls
+            preload="auto"
+            autoplay
+            muted
+            playsinline
+          ></video>
+        </div>
+        <div class="video-wrapper">
+          <h3>Sky News</h3>
+          <video
+            id="skyPlayer"
+            class="video-js vjs-default-skin"
+            controls
+            preload="auto"
+            autoplay
+            muted
+            playsinline
+          ></video>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const apiKey = 'c43b3437c0f093ed56bdc93a115e26a2';
+    const locations = [
+      { name: 'Abbey Wood', coordinates: { lat: 51.4933, lon: 0.1042 } },
+      { name: 'Bexleyheath', coordinates: { lat: 51.4563, lon: 0.1484 } },
+      { name: 'Blackheath', coordinates: { lat: 51.4675, lon: 0.0074 } },
+      { name: 'Charlton', coordinates: { lat: 51.4876, lon: 0.0167 } },
+      { name: 'Dartford', coordinates: { lat: 51.4432, lon: 0.2201 } },
+      { name: 'Eltham', coordinates: { lat: 51.4479, lon: 0.0602 } },
+      { name: 'Greenwich', coordinates: { lat: 51.4769, lon: -0.0005 } },
+      { name: 'Sidcup', coordinates: { lat: 51.4262, lon: 0.1037 } },
+      { name: 'Welling', coordinates: { lat: 51.4655, lon: 0.0875 } },
+      { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
+    ];
+
+    locations.sort((a, b) => a.name.localeCompare(b.name));
+
+    function getWeatherData(location) {
+      const { lat, lon } = location.coordinates;
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+      fetch(url)
+        .then(response => response.json())
+        .then(data => displayWeather(location.name, data))
+        .catch(error => console.error('Error fetching weather data:', error));
+    }
+
+    function displayWeather(locationName, data) {
+      const weatherContainer = document.getElementById('weather-locations');
+      const locationElement = document.createElement('div');
+      locationElement.classList.add('location');
+      locationElement.innerHTML = `
+        <div class="location-name">${locationName}</div>
+        <div class="weather-info">Temperature: <strong>${data.main.temp}°C</strong></div>
+        <div class="weather-info">Weather: ${data.weather[0].description}</div>
+      `;
+      weatherContainer.appendChild(locationElement);
+    }
+
+    function loadWeather() {
+      document.getElementById('weather-locations').innerHTML = '';
+      locations.forEach(getWeatherData);
+    }
+
+    loadWeather();
+    setInterval(loadWeather, 600000); // Refresh every 10 minutes
+
+    function scheduleMidnightReload() {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      const timeout = midnight.getTime() - now.getTime();
+      setTimeout(() => location.reload(), timeout);
+    }
+    scheduleMidnightReload();
+    setInterval(() => location.reload(), 8 * 60 * 60 * 1000); // Backup reload every 8 hours
+
+    // Initialize Video.js players
+    function initVideoPlayers() {
+      // BBC News (HLS)
+      const bbcPlayer = videojs('bbcPlayer', { fluid: true });
+      bbcPlayer.src({
+        src: 'https://vs-cmaf-push-uk-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/iptv_hd_abr_v1_hevc.mpd',
+        type: 'application/dash+xml'
+      });
+      bbcPlayer.play().catch(() => console.warn('BBC autoplay prevented by browser'));
+
+      // Sky News (HLS)
+      const skyPlayer = videojs('skyPlayer', { fluid: true });
+      skyPlayer.src({
+        src: 'https://linear417-gb-hls1-prd-ak.cdn.skycdp.com/100e/Content/HLS_001_1080_30/Live/channel(skynews)/03_1080-30.m3u8',
+        type: 'application/x-mpegURL'
+      });
+      skyPlayer.play().catch(() => console.warn('Sky autoplay prevented by browser'));
+    }
+
+    document.addEventListener('DOMContentLoaded', initVideoPlayers);
+  </script>
+
+</body>
+</html>
