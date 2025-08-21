@@ -13,7 +13,6 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: 20px;
       height: 100vh;
       overflow-y: auto;
       box-sizing: border-box;
@@ -23,14 +22,15 @@
       display: flex;
       width: 100%;
       height: 100%;
-      gap: 20px;
-      max-width: 1920px;
+      gap: 10px;
+      padding: 10px;
       box-sizing: border-box;
+      max-width: 1920px;
     }
 
     #weather-container {
       width: 35%;
-      padding: 20px;
+      padding: 15px;
       overflow-y: auto;
       box-sizing: border-box;
       display: flex;
@@ -41,43 +41,43 @@
     }
 
     #weather-container h2 {
-      font-size: 1.5em;
-      margin: 0 0 10px 0;
+      font-size: 1.3em;
+      margin: 0 0 8px 0;
     }
 
     #weather-bulletin {
-      margin-bottom: 10px;
-      font-size: 1em;
+      margin-bottom: 8px;
+      font-size: 0.9em;
     }
 
     #weather-locations {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+      gap: 10px;
     }
 
     .location {
       background-color: #1c1c1c;
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 0.95em;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.85em;
     }
 
     .location-name {
       font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 1.1em;
+      margin-bottom: 3px;
+      font-size: 1em;
     }
 
     .weather-info {
-      margin-top: 3px;
+      margin-top: 2px;
     }
 
     #video-container {
       width: 65%;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 10px;
       box-sizing: border-box;
       height: 100%;
     }
@@ -85,7 +85,7 @@
     #video-stack {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       height: 100%;
     }
 
@@ -94,17 +94,18 @@
       display: flex;
       flex-direction: column;
       min-height: 0;
+      max-height: 250px; /* Reduced max-height for smaller video boxes */
     }
 
     .video-wrapper h3 {
-      margin: 0 0 5px 0;
-      font-size: 1.1em;
+      margin: 0 0 4px 0;
+      font-size: 1em;
     }
 
     .video-js {
       width: 100%;
       height: 100%;
-      border-radius: 10px;
+      border-radius: 8px;
     }
 
     /* Responsive Design for smaller screens */
@@ -124,7 +125,7 @@
       }
 
       .video-js {
-        height: 300px;
+        height: 250px;
       }
     }
   </style>
