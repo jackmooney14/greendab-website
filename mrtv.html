@@ -7,76 +7,38 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 20px;
-      height: 100vh;
       margin: 0;
       background-color: #000;
       color: white;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 1290px; /* limit total height */
+      width: 1080px; /* limit width */
       overflow: hidden;
     }
 
     #main-container {
       display: flex;
-      justify-content: space-between;
       width: 100%;
-      max-width: 1920px;
       height: 100%;
       gap: 20px;
+      max-width: 1080px;
+      max-height: 1290px;
     }
 
     #weather-container {
       width: 35%;
-      padding: 20px;
-      overflow-y: auto;
-      box-sizing: border-box;
       display: flex;
       flex-direction: column;
       background-color: #111;
       border-radius: 12px;
-      max-height: 100%;
-    }
-
-    #weather-container h2 {
-      font-size: 1.5em;
-      margin: 0 0 10px 0;
-    }
-
-    #weather-bulletin {
-      margin-bottom: 10px;
-      font-size: 1em;
-    }
-
-    #weather-locations {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 16px;
-    }
-
-    .location {
-      background-color: #1c1c1c;
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 0.95em;
-    }
-
-    .location-name {
-      font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 1.1em;
-    }
-
-    .weather-info {
-      margin-top: 3px;
-    }
-
-    /* Video container */
-    #video-container {
-      flex: 1;
       padding: 20px;
-      box-sizing: border-box;
+      overflow-y: auto;
+    }
+
+    #video-container {
+      width: 65%;
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -85,19 +47,19 @@
     #video-stack {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 10px;
       height: 100%;
     }
 
     .video-wrapper {
-      height: 50%; /* Each video takes half of container */
+      flex: 1; /* each video takes half of video-container height */
       display: flex;
       flex-direction: column;
     }
 
     .video-wrapper h3 {
       margin: 0 0 5px 0;
-      font-size: 1.2em;
+      font-size: 1.1em;
     }
 
     .video-js {
@@ -105,30 +67,8 @@
       height: 100%;
       border-radius: 10px;
     }
-
-    @media screen and (max-width: 1080px) {
-      #main-container {
-        flex-direction: column;
-      }
-
-      #weather-container,
-      #video-container {
-        width: 100%;
-        height: auto;
-        margin-bottom: 20px;
-      }
-
-      #weather-locations {
-        grid-template-columns: 1fr;
-      }
-
-      .video-js {
-        height: 300px;
-      }
-    }
   </style>
 
-  <!-- Video.js libraries -->
   <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
   <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.0.2/dist/videojs-http-streaming.min.js"></script>
@@ -137,18 +77,15 @@
 <body>
 
   <div id="main-container">
-    <!-- Weather Section -->
     <div id="weather-container">
       <h2>Weather Update</h2>
       <div id="weather-bulletin">
         <p>Current weather in the areas surrounding Greenwich:</p>
       </div>
       <div id="weather-locations">
-        <!-- Weather info loads here -->
-      </div>
+        </div>
     </div>
 
-    <!-- Video Section -->
     <div id="video-container">
       <h2>Live News Streams</h2>
       <div id="video-stack">
