@@ -78,16 +78,27 @@
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       background-color: #111;
       border-radius: 12px;
+      gap: 20px;
     }
 
-    iframe {
+    #video-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      height: 100%;
+    }
+
+    .video-wrapper h3 {
+      margin: 0 0 5px 0;
+      font-size: 1.2em;
+    }
+
+    .video-js {
       width: 100%;
-      height: calc(100vh - 80px);
-      min-height: 480px;
-      border: none;
+      height: 100%;
       border-radius: 10px;
     }
 
@@ -107,18 +118,21 @@
         grid-template-columns: 1fr;
       }
 
-      iframe {
-        height: 450px;
+      .video-js {
+        height: 300px;
       }
     }
   </style>
 
-  <!-- Player.js library -->
-  <script src="https://cdn.embed.ly/player-0.1.0.min.js"></script>
+  <!-- Video.js library -->
+  <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+  <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@videojs/http-streaming@3.0.2/dist/videojs-http-streaming.min.js"></script>
 </head>
 <body>
 
   <div id="main-container">
+    <!-- Weather Section -->
     <div id="weather-container">
       <h2>Weather Update</h2>
       <div id="weather-bulletin">
@@ -129,15 +143,29 @@
       </div>
     </div>
 
+    <!-- Video Section -->
     <div id="video-container">
-      <iframe
-        id="vidgrid-player"
-        src="https://vidgrid.tk.gg/?layout=N4IgNgxiBcBMA0IBuMDaoCWATGzsFMB7ARhEQGcAnKaEACwBcGAHc6AenbAwDt8BDSgBZiAdgC0AcwBG4umHLFxzSlnH8A1gDoIWHlvIaAnruY7CAW3bEADDfzsAwoR4N8r9gAkAMgGUA+nbE-rYAHDb+AMw27N4YSA4QdPw8fGAAFIZGfADu5ACU7LxY+AAeITbh4tFaFpEArqFkIDz8Fvi4vsYABABy+HnNhKr4lDDEAL7wmDi0SASEsM1UNPRMrBzsSORyCsr15HTiOTni3Alamm38GABe+FhafAzspQC8QkVv9ZQ80NLSCDQZgYDbkUbzCD4f6A-y5cj+JIpNL+OhYdgWQjSDBgfD+HIYABmGH8FhuPH85Cw-n40ko-iQsFqDSaiFa7VwACFOY4+gNyEMRmM4FMZrh5iVCJFltRcM12R1aIKSsLIqKQNhxQshDLVvK2oqQMrRjAhOrNXMFgBWXVytkGu0gYYqmBW82zPCSgBstqV9o5fqdQpgXvdWslol9Rv9huNwtEYctktZIBWjoVjudJugoUTnqIAE4o-qA9Ggy7oAWJgBdCZAA"
-        allowfullscreen
-        title="Vidgrid Embed"
-        loading="lazy"
-        <!-- sandbox="allow-scripts allow-same-origin allow-presentation" -->
-      ></iframe>
+      <h2>Live News Streams</h2>
+      <div id="video-stack">
+        <div class="video-wrapper">
+          <h3>BBC News</h3>
+          <video
+            id="bbcPlayer"
+            class="video-js vjs-default-skin"
+            controls
+            preload="auto"
+          ></video>
+        </div>
+        <div class="video-wrapper">
+          <h3>Sky News</h3>
+          <video
+            id="skyPlayer"
+            class="video-js vjs-default-skin"
+            controls
+            preload="auto"
+          ></video>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -185,41 +213,33 @@
       locations.forEach(getWeatherData);
     }
 
-    // Initial load
     loadWeather();
+    setInterval(loadWeather, 600000); // Refresh every 10 minutes
 
-    // Refresh every 10 minutes
-    setInterval(loadWeather, 600000);
-
-    // Auto-refresh at midnight
     function scheduleMidnightReload() {
       const now = new Date();
       const midnight = new Date();
       midnight.setHours(24, 0, 0, 0);
       const timeout = midnight.getTime() - now.getTime();
-      setTimeout(() => {
-        location.reload();
-      }, timeout);
+      setTimeout(() => location.reload(), timeout);
     }
     scheduleMidnightReload();
+    setInterval(() => location.reload(), 8 * 60 * 60 * 1000); // Backup reload every 8 hours
 
-    // Backup reload every 8 hours
-    setInterval(() => location.reload(), 8 * 60 * 60 * 1000);
-
-    // Player.js setup AFTER iframe loads
-    document.addEventListener("DOMContentLoaded", function () {
-      const iframe = document.getElementById("vidgrid-player");
-      iframe.addEventListener("load", function () {
-        try {
-          const player = new playerjs.Player(iframe);
-          player.on("ready", function () {
-            player.setControls(false);
-          });
-        } catch (e) {
-          console.warn("Player.js could not initialize:", e);
-        }
-      });
+    // Initialize Video.js players
+    const bbcPlayer = videojs('bbcPlayer');
+    bbcPlayer.src({
+      src: 'http://a.files.bbci.co.uk/media/live/manifesto/audio_video/simulcast/hls/uk/abr_hdtv/ak/bbc_news24.m3u8',
+      type: 'application/x-mpegURL'
     });
+    bbcPlayer.play();
+
+    const skyPlayer = videojs('skyPlayer');
+    skyPlayer.src({
+      src: 'https://linear417-gb-hls1-prd-ak.cdn.skycdp.com/100e/Content/HLS_001_1080_30/Live/channel(skynews)/03_1080-30.m3u8',
+      type: 'application/x-mpegURL'
+    });
+    skyPlayer.play();
   </script>
 
 </body>
