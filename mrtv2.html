@@ -1,203 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Weather + Live News</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 10px;
-      margin: 0;
-      background-color: #000;
-      color: white;
-      overflow: hidden;
-      height: 100vh;
-    }
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 10px;
+    margin: 0;
+    background-color: #000;
+    color: white;
+    overflow: hidden;
+    height: 100vh;
+  }
 
-    #main-container {
-      display: flex;
-      justify-content: space-between;
-      width: 100%;
-      max-width: 1080px; /* Fit within 1080px width */
-      height: 100%;
-      gap: 10px;
-    }
+  #main-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1080px; /* Fit within 1080px width */
+    height: 100%;
+    gap: 10px;
+  }
 
-    #weather-container {
-      width: 45%;
-      padding: 10px;
-      overflow-y: auto;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      background-color: #111;
-      border-radius: 10px;
-      max-height: 100%;
-    }
+  #weather-container {
+    width: 45%;
+    padding: 10px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background-color: #111;
+    border-radius: 10px;
+    max-height: 100%;
+  }
 
-    #weather-container h2 {
-      font-size: 1.2em;
-      margin: 0 0 10px 0;
-    }
+  #weather-locations {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 
-    #weather-bulletin {
-      margin-bottom: 10px;
-      font-size: 0.9em;
-    }
+  .location {
+    background-color: #1c1c1c;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    height: 100px; /* fixed height for weather cards */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
 
-    #weather-locations {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 10px;
-    }
+  #video-container {
+    width: 55%;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background-color: #111;
+    border-radius: 10px;
+    max-height: 100%;
+    overflow-y: auto;
+  }
 
-    .location {
-      background-color: #1c1c1c;
-      padding: 8px;
-      border-radius: 8px;
-      font-size: 0.85em;
-    }
+  .video-box {
+    margin-bottom: 3px; /* fixed spacing between video players */
+  }
 
-    .location-name {
-      font-weight: bold;
-      margin-bottom: 4px;
-      font-size: 1em;
-    }
-
-    .weather-info {
-      margin-top: 2px;
-    }
-
-    #video-container {
-      width: 55%;
-      padding: 10px;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      background-color: #111;
-      border-radius: 10px;
-      max-height: 100%;
-      overflow-y: auto;
-    }
-
-    #video-container h2 {
-      font-size: 1.2em;
-      margin: 0 0 10px 0;
-    }
-
-    .video-box {
-      margin-bottom: 10px;
-      flex: 1;
-    }
-
-    video {
-      width: 100%;
-      height: 200px; /* Match the grid box style */
-      border-radius: 8px;
-      background: black;
-      object-fit: cover;
-    }
-
-    @media screen and (max-width: 1080px) {
-      #main-container {
-        flex-direction: column;
-      }
-      #weather-container, #video-container {
-        width: 100%;
-        height: auto;
-        margin-bottom: 10px;
-      }
-      video {
-        height: 220px;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <div id="main-container">
-    <!-- Weather Section -->
-    <div id="weather-container">
-      <h2>Weather Update</h2>
-      <div id="weather-bulletin">
-        <p>Current weather in the areas surrounding Greenwich:</p>
-      </div>
-      <div id="weather-locations"></div>
-    </div>
-
-    <!-- News Streams -->
-    <div id="video-container">
-      <h2>Live News Streams</h2>
-      <div class="video-box">
-        <strong>BBC News</strong>
-        <video controls autoplay muted playsinline>
-          <source src="http://a.files.bbci.co.uk/media/live/manifesto/audio_video/simulcast/hls/uk/abr_hdtv/ak/bbc_news24.m3u8" type="application/x-mpegURL">
-          Your browser does not support the video tag.
-        </video>
-      </div>
-      <div class="video-box">
-        <strong>Sky News</strong>
-        <video controls autoplay muted playsinline>
-          <source src="https://linear021-gb-dash1-prd-ak.cdn.skycdp.com/100e/Content/DASH_003_sd/Live/channel(skynews)/manifest_hd.mpd" type="application/dash+xml">
-          Your browser does not support the video tag.
-        </video>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const apiKey = 'c43b3437c0f093ed56bdc93a115e26a2';
-    const locations = [
-      { name: 'Abbey Wood', coordinates: { lat: 51.4933, lon: 0.1042 } },
-      { name: 'Bexleyheath', coordinates: { lat: 51.4563, lon: 0.1484 } },
-      { name: 'Blackheath', coordinates: { lat: 51.4675, lon: 0.0074 } },
-      { name: 'Charlton', coordinates: { lat: 51.4876, lon: 0.0167 } },
-      { name: 'Dartford', coordinates: { lat: 51.4432, lon: 0.2201 } },
-      { name: 'Eltham', coordinates: { lat: 51.4479, lon: 0.0602 } },
-      { name: 'Greenwich', coordinates: { lat: 51.4769, lon: -0.0005 } },
-      { name: 'Sidcup', coordinates: { lat: 51.4262, lon: 0.1037 } },
-      { name: 'Welling', coordinates: { lat: 51.4655, lon: 0.0875 } },
-      { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
-    ];
-
-    locations.sort((a, b) => a.name.localeCompare(b.name));
-
-    function getWeatherData(location) {
-      const { lat, lon } = location.coordinates;
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
-
-      fetch(url)
-        .then(response => response.json())
-        .then(data => displayWeather(location.name, data))
-        .catch(error => console.error('Error fetching weather data:', error));
-    }
-
-    function displayWeather(locationName, data) {
-      const weatherContainer = document.getElementById('weather-locations');
-      const locationElement = document.createElement('div');
-      locationElement.classList.add('location');
-      locationElement.innerHTML = `
-        <div class="location-name">${locationName}</div>
-        <div class="weather-info">Temperature: <strong>${data.main.temp.toFixed(1)}°C</strong></div>
-        <div class="weather-info">Weather: ${data.weather[0].description}</div>
-      `;
-      weatherContainer.appendChild(locationElement);
-    }
-
-    function loadWeather() {
-      document.getElementById('weather-locations').innerHTML = '';
-      locations.forEach(getWeatherData);
-    }
-
-    // Initial load
-    loadWeather();
-    // Refresh every 10 minutes
-    setInterval(loadWeather, 600000);
-  </script>
-
-</body>
-</html>
+  video {
+    width: 100%;
+    height: 100px; /* match weather card height */
+    border-radius: 8px;
+    background: black;
+    object-fit: cover;
+    display: block;
+  }
+</style>
