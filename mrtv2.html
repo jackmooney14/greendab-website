@@ -1,77 +1,158 @@
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 10px;
-    margin: 0;
-    background-color: #000;
-    color: white;
-    overflow: hidden;
-    height: 100vh;
-  }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather & News Dashboard</title>
+  <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
+  <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
+  <script src="https://cdn.dashjs.org/latest/dash.all.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 10px;
+      margin: 0;
+      background-color: #000;
+      color: white;
+      overflow: hidden;
+      height: 100vh;
+    }
 
-  #main-container {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 1080px; /* Fit within 1080px width */
-    height: 100%;
-    gap: 10px;
-  }
+    #main-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1080px; /* Fit within 1080px width */
+      height: 100%;
+      gap: 10px;
+    }
 
-  #weather-container {
-    width: 45%;
-    padding: 10px;
-    overflow-y: auto;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    background-color: #111;
-    border-radius: 10px;
-    max-height: 100%;
-  }
+    #weather-container {
+      width: 45%;
+      padding: 10px;
+      overflow-y: auto;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      background-color: #111;
+      border-radius: 10px;
+      max-height: 100%;
+    }
 
-  #weather-locations {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
+    #weather-locations {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
 
-  .location {
-    background-color: #1c1c1c;
-    padding: 8px;
-    border-radius: 8px;
-    font-size: 0.85em;
-    height: 100px; /* fixed height for weather cards */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
+    .location {
+      background-color: #1c1c1c;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      height: 100px; /* fixed height for weather cards */
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
 
-  #video-container {
-    width: 55%;
-    padding: 10px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    background-color: #111;
-    border-radius: 10px;
-    max-height: 100%;
-    overflow-y: auto;
-  }
+    #video-container {
+      width: 55%;
+      padding: 10px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      background-color: #111;
+      border-radius: 10px;
+      max-height: 100%;
+      overflow-y: auto;
+    }
 
-  .video-box {
-    margin-bottom: 3px; /* fixed spacing between video players */
-  }
+    .video-box {
+      margin-bottom: 3px; /* fixed spacing between video players */
+    }
 
-  video {
-    width: 100%;
-    height: 100px; /* match weather card height */
-    border-radius: 8px;
-    background: black;
-    object-fit: cover;
-    display: block;
-  }
-</style>
+    .video-box h3 {
+      margin: 0 0 4px 0;
+      font-size: 0.9em;
+    }
+
+    video {
+      width: 100%;
+      height: 160px; /* ✅ fits nicely without overlapping */
+      border-radius: 8px;
+      background: black;
+      object-fit: cover;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="main-container">
+    <!-- Weather Section -->
+    <div id="weather-container">
+      <h2>Weather Update</h2>
+      <p>Current weather in the areas surrounding Greenwich:</p>
+      <div id="weather-locations">
+        <div class="location">Welling<br>Temp: 17.1°C<br>Clouds</div>
+        <div class="location">Greenwich<br>Temp: 17.1°C<br>Clouds</div>
+        <div class="location">Woolwich<br>Temp: 17.4°C<br>Clouds</div>
+        <div class="location">Dartford<br>Temp: 17.5°C<br>Clouds</div>
+        <div class="location">Eltham<br>Temp: 17.1°C<br>Clouds</div>
+        <div class="location">Sidcup<br>Temp: 17.0°C<br>Clouds</div>
+        <div class="location">Abbey Wood<br>Temp: 17.5°C<br>Clouds</div>
+        <div class="location">Bexleyheath<br>Temp: 17.2°C<br>Clouds</div>
+      </div>
+    </div>
+
+    <!-- Video Section -->
+    <div id="video-container">
+      <h2>Live News Streams</h2>
+
+      <!-- BBC News -->
+      <div class="video-box">
+        <h3>BBC News</h3>
+        <video id="bbcPlayer" class="video-js vjs-default-skin" autoplay muted playsinline controls></video>
+      </div>
+
+      <!-- Sky News -->
+      <div class="video-box">
+        <h3>Sky News</h3>
+        <video id="skyPlayer" class="video-js vjs-default-skin" autoplay muted playsinline controls></video>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // BBC News (DASH stream)
+    var bbcPlayer = videojs("bbcPlayer", {
+      autoplay: true,
+      muted: true,
+      controls: true,
+      fluid: true
+    });
+
+    bbcPlayer.ready(function () {
+      if (dashjs.MediaPlayer.isSupported()) {
+        var url = "https://vs-cmaf-push-uk-live.akamaized.net/x=4/i=urn:bbc:pips:service:bbc_news_channel_hd/iptv_hd_abr_v1_hevc.mpd";
+        var dashPlayer = dashjs.MediaPlayer().create();
+        dashPlayer.initialize(bbcPlayer.tech().el().querySelector('video'), url, true);
+      }
+    });
+
+    // Sky News (HLS stream)
+    var skyPlayer = videojs("skyPlayer", {
+      autoplay: true,
+      muted: true,
+      controls: true,
+      fluid: true,
+      sources: [{
+        src: "https://linear417-gb-hls1-prd-ak.cdn.skycdp.com/100e/Content/HLS_001_1080_30/Live/channel(skynews)/03_1080-30.m3u8",
+        type: "application/x-mpegURL"
+      }]
+    });
+  </script>
+</body>
+</html>
