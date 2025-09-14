@@ -28,48 +28,56 @@
     }
 
     #weather-container {
-      width: 35%;
-      padding: 20px;
+      width: 50%; /* Larger weather section */
+      padding: 24px;
       overflow-y: auto;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       background-color: #111;
-      border-radius: 12px;
+      border-radius: 16px;
       max-height: 100%;
     }
 
     #weather-container h2 {
-      font-size: 1.5em;
-      margin: 0 0 10px 0;
+      font-size: 2em; /* Bigger heading */
+      margin: 0 0 15px 0;
     }
 
     #weather-bulletin {
-      margin-bottom: 10px;
-      font-size: 1em;
+      margin-bottom: 15px;
+      font-size: 1.2em;
     }
 
     #weather-locations {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(2, 1fr); /* Two columns */
+      gap: 24px;
     }
 
     .location {
       background-color: #1c1c1c;
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 0.95em;
+      padding: 20px;
+      border-radius: 14px;
+      font-size: 1.1em;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      transition: transform 0.2s ease;
+    }
+
+    .location:hover {
+      transform: scale(1.03);
     }
 
     .location-name {
       font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 1.1em;
+      margin-bottom: 8px;
+      font-size: 1.3em; /* Bigger name */
+      color: #4db8ff;
     }
 
     .weather-info {
-      margin-top: 3px;
+      margin-top: 6px;
+      font-size: 1.1em;
     }
 
     #video-container {
@@ -104,7 +112,7 @@
       }
 
       #weather-locations {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Single column on small screens */
       }
 
       iframe {
@@ -171,8 +179,8 @@
       locationElement.classList.add('location');
       locationElement.innerHTML = `
         <div class="location-name">${locationName}</div>
-        <div class="weather-info">Temperature: <strong>${data.main.temp}°C</strong></div>
-        <div class="weather-info">Weather: ${data.weather[0].description}</div>
+        <div class="weather-info">🌡️ Temperature: <strong>${data.main.temp}°C</strong></div>
+        <div class="weather-info">☁️ Weather: ${data.weather[0].description}</div>
       `;
       weatherContainer.appendChild(locationElement);
     }
