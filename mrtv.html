@@ -28,78 +28,58 @@
     }
 
     #weather-container {
-      width: 40%; /* Weather = 40% */
+      width: 40%; /* Weather takes 40% */
       padding: 20px;
       overflow-y: auto;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       background-color: #111;
-      border-radius: 16px;
+      border-radius: 12px;
       max-height: 100%;
     }
 
     #weather-container h2 {
-      font-size: 1.8em;
-      margin: 0 0 12px 0;
+      font-size: 2em;
+      margin: 0 0 15px 0;
     }
 
     #weather-bulletin {
-      margin-bottom: 12px;
-      font-size: 1.1em;
+      margin-bottom: 15px;
+      font-size: 1.2em;
     }
 
     #weather-locations {
       display: grid;
-      grid-template-columns: repeat(2, 1fr); /* Two columns */
-      gap: 16px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
     }
 
     .location {
       background-color: #1c1c1c;
-      padding: 14px;
-      border-radius: 12px;
-      font-size: 1em;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-      transition: transform 0.2s ease;
+      padding: 20px;
+      border-radius: 14px;
+      font-size: 1.2em;
       display: flex;
       flex-direction: column;
-      gap: 6px; /* tighter spacing */
-    }
-
-    .location:hover {
-      transform: scale(1.02);
+      gap: 8px;
     }
 
     .location-name {
       font-weight: bold;
-      font-size: 1.15em;
-      color: #4db8ff;
+      font-size: 1.4em;
+      margin-bottom: 6px;
     }
 
-    .weather-row {
+    .weather-info {
+      font-size: 1.2em;
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    .weather-info {
-      font-size: 1em;
-      line-height: 1.3;
-    }
-
-    .temp-cold {
-      color: #4db8ff; /* Blue for cold */
-    }
-    .temp-mild {
-      color: #ffd633; /* Yellow for mild */
-    }
-    .temp-hot {
-      color: #ff704d; /* Red for hot */
-    }
-
     #video-container {
-      width: 60%; /* Video = 60% */
+      width: 60%; /* Video takes 60% */
       padding: 20px;
       box-sizing: border-box;
       display: flex;
@@ -130,7 +110,7 @@
       }
 
       #weather-locations {
-        grid-template-columns: 1fr; /* Single column on small screens */
+        grid-template-columns: 1fr;
       }
 
       iframe {
@@ -180,11 +160,18 @@
 
     locations.sort((a, b) => a.name.localeCompare(b.name));
 
-    function getTempClass(temp) {
-      if (temp < 10) return "temp-cold";
-      if (temp < 20) return "temp-mild";
-      return "temp-hot";
-    }
+    const icons = {
+      "clear sky": "☀️",
+      "few clouds": "🌤️",
+      "scattered clouds": "⛅",
+      "broken clouds": "🌥️",
+      "overcast clouds": "☁️",
+      "shower rain": "🌦️",
+      "rain": "🌧️",
+      "thunderstorm": "⛈️",
+      "snow": "❄️",
+      "mist": "🌫️"
+    };
 
     function getWeatherData(location) {
       const { lat, lon } = location.coordinates;
@@ -200,19 +187,14 @@
       const weatherContainer = document.getElementById('weather-locations');
       const locationElement = document.createElement('div');
       locationElement.classList.add('location');
-
-      const tempClass = getTempClass(data.main.temp);
-      const iconUrl = `http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+      
+      const condition = data.weather[0].description;
+      const icon = icons[condition] || "🌡️";
 
       locationElement.innerHTML = `
         <div class="location-name">${locationName}</div>
-        <div class="weather-row">
-          <img src="${iconUrl}" alt="${data.weather[0].description}" width="36" height="36">
-          <div class="weather-info">${data.weather[0].description}</div>
-        </div>
-        <div class="weather-info">🌡️ 
-          <strong class="${tempClass}">${data.main.temp}°C</strong>
-        </div>
+        <div class="weather-info">${icon} ${condition}</div>
+        <div class="weather-info">🌡️ ${data.main.temp.toFixed(1)}°C</div>
       `;
       weatherContainer.appendChild(locationElement);
     }
