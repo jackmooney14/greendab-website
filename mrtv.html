@@ -11,11 +11,10 @@
       justify-content: center;
       align-items: flex-start;
       padding: 20px;
-      height: 100vh;
       margin: 0;
       background-color: #000;
       color: white;
-      overflow: hidden;
+      min-height: 100vh;
     }
 
     #main-container {
@@ -23,12 +22,11 @@
       justify-content: space-between;
       width: 100%;
       max-width: 1920px;
-      height: 100%;
       gap: 20px;
     }
 
     #weather-container {
-      width: 40%; /* Weather takes 40% */
+      width: 40%;
       padding: 20px;
       overflow-y: auto;
       box-sizing: border-box;
@@ -36,7 +34,7 @@
       flex-direction: column;
       background-color: #111;
       border-radius: 12px;
-      max-height: 100%;
+      max-height: 100vh;
     }
 
     #weather-container h2 {
@@ -79,7 +77,7 @@
     }
 
     #video-container {
-      width: 60%; /* Video takes 60% */
+      width: 60%;
       padding: 20px;
       box-sizing: border-box;
       display: flex;
@@ -156,9 +154,7 @@
       { name: 'Sidcup', coordinates: { lat: 51.4262, lon: 0.1037 } },
       { name: 'Welling', coordinates: { lat: 51.4655, lon: 0.0875 } },
       { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
-    ];
-
-    locations.sort((a, b) => a.name.localeCompare(b.name));
+    ].sort((a, b) => a.name.localeCompare(b.name));
 
     const icons = {
       "clear sky": "☀️",
@@ -173,69 +169,67 @@
       "mist": "🌫️"
     };
 
-    function getWeatherData(location) {
-      const { lat, lon } = location.coordinates;
-      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
-
-      fetch(url)
-        .then(response => response.json())
-        .then(data => displayWeather(location.name, data))
-        .catch(error => console.error('Error fetching weather data:', error));
+    async function getWeatherData(location) {
+      try {
+        const { lat, lon } = location.coordinates;
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        return { name: location.name, data };
+      } catch (e) {
+        console.error("Weather fetch error:", e);
+        return null;
+      }
     }
 
-    function displayWeather(locationName, data) {
+    async function loadWeather() {
       const weatherContainer = document.getElementById('weather-locations');
-      const locationElement = document.createElement('div');
-      locationElement.classList.add('location');
-      
-      const condition = data.weather[0].description;
-      const icon = icons[condition] || "🌡️";
+      weatherContainer.innerHTML = '';
 
-      locationElement.innerHTML = `
-        <div class="location-name">${locationName}</div>
-        <div class="weather-info">${icon} ${condition}</div>
-        <div class="weather-info">🌡️ ${data.main.temp.toFixed(1)}°C</div>
-      `;
-      weatherContainer.appendChild(locationElement);
-    }
+      const results = await Promise.all(locations.map(getWeatherData));
+      results.filter(Boolean).forEach(({ name, data }) => {
+        const condition = data.weather[0].description;
+        const icon = icons[condition] || "🌡️";
 
-    function loadWeather() {
-      document.getElementById('weather-locations').innerHTML = '';
-      locations.forEach(getWeatherData);
+        const el = document.createElement('div');
+        el.classList.add('location');
+        el.innerHTML = `
+          <div class="location-name">${name}</div>
+          <div class="weather-info">${icon} ${condition}</div>
+          <div class="weather-info">🌡️ ${data.main.temp.toFixed(1)}°C</div>
+        `;
+        weatherContainer.appendChild(el);
+      });
     }
 
     // Initial load
     loadWeather();
 
-    // Refresh every 10 minutes
-    setInterval(loadWeather, 600000);
+    // Refresh every 12 hours (20 calls/day max)
+    setInterval(loadWeather, 12 * 60 * 60 * 1000);
 
-    // Auto-refresh at midnight
+    // Reload once per day at midnight
     function scheduleMidnightReload() {
       const now = new Date();
       const midnight = new Date();
       midnight.setHours(24, 0, 0, 0);
       const timeout = midnight.getTime() - now.getTime();
-      setTimeout(() => {
-        location.reload();
-      }, timeout);
+      setTimeout(() => location.reload(), timeout);
     }
     scheduleMidnightReload();
 
-    // Backup reload every 8 hours
-    setInterval(() => location.reload(), 8 * 60 * 60 * 1000);
-
-    // Player.js setup AFTER iframe loads
-    document.addEventListener("DOMContentLoaded", function () {
+    // Player.js setup
+    document.addEventListener("DOMContentLoaded", () => {
       const iframe = document.getElementById("vidgrid-player");
-      iframe.addEventListener("load", function () {
+      iframe.addEventListener("load", () => {
         try {
-          const player = new playerjs.Player(iframe);
-          player.on("ready", function () {
-            player.setControls(false);
+          if (window.playerInstance) return; // prevent duplicates
+          window.playerInstance = new playerjs.Player(iframe);
+          window.playerInstance.on("ready", () => {
+            window.playerInstance.setControls(false);
           });
         } catch (e) {
-          console.warn("Player.js could not initialize:", e);
+          console.warn("Player.js init failed:", e);
         }
       });
     });
