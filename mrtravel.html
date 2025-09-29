@@ -11,7 +11,7 @@
       margin: auto;
       background: #fafafa;
     }
-    h1, h2, h3 { text-align: center; } /* Center all headings */
+    h1, h2, h3 { text-align: center; }
     .section { margin-bottom: 2em; }
     .item { background: white; padding: 1em; margin-bottom: .8em; border-left: 6px solid; border-radius: 5px; }
     .high { border-color: #e53935; }
@@ -108,7 +108,7 @@
         if (!weatherData) return;
 
         const forecastList = weatherData.list;
-        const city = "South East London"; // 🔹 Updated label here
+        const city = "South East London";
 
         if (!forecastList || forecastList.length === 0) {
             container.textContent = "Weather forecast data unavailable.";
@@ -124,8 +124,6 @@
         const feelsLike = Math.round(currentWeather.main.feels_like);
 
         let greeting = "Hello";
-        let detailedForecast = "";
-
         if (currentHour >= 5 && currentHour < 12) { 
             greeting = "Good morning";
         } else if (currentHour >= 12 && currentHour < 18) { 
@@ -136,7 +134,7 @@
             greeting = "Good night";
         }
 
-        detailedForecast = `Currently in ${city}, it's ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C.`;
+        const detailedForecast = `Currently in ${city}, it's ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C.`;
 
         container.innerHTML = `<strong>${greeting}!</strong> ${detailedForecast}`;
     }
@@ -248,13 +246,21 @@
           return;
         }
 
-        const messages = data.map(line => {
-          const name = line.name || label;
-          const status = line.lineStatuses?.[0]?.statusSeverityDescription || "Unknown";
-          return `${name}: ${status}`;
-        });
+        container.innerHTML = "";
+        data.forEach(line => {
+          const statusObj = line.lineStatuses?.[0];
+          const status = statusObj?.statusSeverityDescription || "Unknown";
+          const reason = statusObj?.reason || "";
 
-        container.innerHTML = "<ul>" + messages.map(m => `<li>${m}</li>`).join("") + "</ul>";
+          let sevClass = "low";
+          let emoji = "🟢";
+          if (status !== "Good Service") { sevClass = "medium"; emoji = "🟠"; }
+
+          const d = document.createElement("div");
+          d.className = `item ${sevClass}`;
+          d.innerHTML = `<strong>${emoji} ${line.name || label}:</strong> ${status}${reason ? " – " + reason : ""}`;
+          container.appendChild(d);
+        });
       } catch (err) {
         container.textContent = `Error fetching ${label} status: ` + err.message;
       }
