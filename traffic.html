@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>South-East London Traffic Updates</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <section id="traffic-section" class="p-4 max-w-5xl mx-auto">
+      <h1 class="text-2xl font-bold mb-2">South-East London Traffic Updates</h1>
+      <p class="mb-4 text-sm text-gray-600">
+        Live road disruption data from Transport for London (TfL).
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input
+          id="traffic-search"
+          placeholder="Search (street, description, ...)"
+          class="flex-1 p-2 border rounded"
+        />
+        <select id="traffic-borough" class="p-2 border rounded">
+          <option value="All">All SE boroughs</option>
+        </select>
+        <button
+          id="traffic-refresh"
+          class="p-2 bg-gray-100 rounded hover:bg-gray-200"
+        >
+          Refresh
+        </button>
+      </div>
+
+      <div id="traffic-status" class="mb-3 text-sm text-gray-500"></div>
+      <div id="traffic-list" class="space-y-3"></div>
+    </section>
+
+    <script>
+      // ===== CONFIG =====
+      // ✅ Replace the strings below with your actual TfL credentials
+      const TFL_APP_ID = ""; // Optional (leave blank if not issued)
+      const TFL_APP_KEY = "044bd54cfdc94f03ba10314d52eb59fe"; // <--- Your TfL API key here
+
+      const TFL_URL = `https://api.tfl.gov.uk/Road/Disruption?app_key=${TFL_APP_KEY}`;
+
+      const SE_BOROUGHS = [
+        "Greenwich",
+        "Lewisham",
+        "Southwark",
+        "Bromley",
+        "Bexley",
+        "Lambeth",
+      ];
+
+      const el = {
+        list: document.getElementById("traffic-list"),
+        status: document.getElementById("traffic-status"),
+        search: document.getElementById("traffic-search"),
+        borough: document.getElementById("traffic-borough"),
+      };
+
+      const refreshBtn = document.getElementById("traffic-refresh");
+      SE_BOROUGHS.forEach((b) => {
+        const opt = document.createElement("option");
+        opt.value = b;
+        opt.textContent = b;
+        el.borough.appendChild(opt);
+      });
+
+      let disruptions = [];
+
+      async function loadDisruptions() {
+        el.status.textContent = "Loading TfL road disruptions...";
+        el.list.innerHTML = "";
+        try {
+          const res = await fetch(TFL_URL);
+          if (!res.ok) throw new Error("API request failed");
+          const data = await res.json();
+          disruptions = data.map((d) => ({
+            id: d.id || crypto.randomUUID(),
+            title: d.title || d.category || "Road disruption",
+            desc: d.description || d.comments || "",
+            road: d.roadName || d.location || "",
+            start: d.startDate || "",
+            end: d.endDate || "",
+            updated: d.lastUpdated || "",
+          }));
+          el.status.textContent = `Loaded ${disruptions.length} disruptions.`;
+          renderList();
+        } catch (err) {
+          el.status.textContent = "Error loading TfL data.";
+          console.error(err);
+        }
+      }
+
+      function renderList() {
+        const q = el.search.value.trim().toLowerCase();
+        const b = el.borough.value;
+        const filtered = disruptions.filter((d) => {
+          const hay = `${d.title} ${d.desc} ${d.road}`.toLowerCase();
+          if (b !== "All" && !hay.includes(b.toLowerCase())) return false;
+          if (q && !hay.includes(q)) return false;
+          return true;
+        });
+
+        el.list.innerHTML = "";
+        if (filtered.length === 0) {
+          el.list.innerHTML =
+            '<div class="text-gray-600">No disruptions found for selected filters.</div>';
+          return;
+        }
+
+        filtered.forEach((d) => {
+          const card = document.createElement("div");
+          card.className = "p-3 border rounded bg-white shadow-sm";
+          card.innerHTML = `
+            <div class="flex justify-between items-start">
+              <div>
+                <h2 class="font-semibold">${d.title}</h2>
+                <div class="text-sm text-gray-600">${d.road}</div>
+              </div>
+              <div class="text-xs text-gray-500 text-right">
+                ${
+                  d.updated
+                    ? `<div>Updated: ${new Date(
+                        d.updated
+                      ).toLocaleString()}</div>`
+                    : ""
+                }
+                ${
+                  d.start
+                    ? `<div>From: ${new Date(d.start).toLocaleString()}</div>`
+                    : ""
+                }
+              </div>
+            </div>
+            <p class="mt-2 text-sm">${d.desc}</p>
+          `;
+          el.list.appendChild(card);
+        });
+      }
+
+      refreshBtn.onclick = loadDisruptions;
+      el.search.oninput = renderList;
+      el.borough.onchange = renderList;
+
+      // Auto-load on page open
+      loadDisruptions();
+    </script>
+  </body>
+</html>
