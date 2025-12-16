@@ -13,59 +13,75 @@
     }
     h1, h2, h3 { text-align: center; }
     .section { margin-bottom: 2em; }
-    .item { background: white; padding: 1em; margin-bottom: .8em; border-left: 6px solid; border-radius: 5px; }
+    .item {
+      background: white;
+      padding: 1em;
+      margin-bottom: .8em;
+      border-left: 6px solid;
+      border-radius: 5px;
+    }
     .high { border-color: #e53935; }
     .medium { border-color: #fb8c00; }
     .low { border-color: #43a047; }
 
     .tube-line-item {
-        display: flex;
-        align-items: center;
+      display: flex;
+      align-items: center;
     }
     .tube-line-item strong {
-        margin-right: 0.5em;
+      margin-right: 0.5em;
     }
 
     #weather-forecast {
-        background: #e0f2f7;
-        padding: 1.5em;
-        margin-bottom: 2em;
-        border-radius: 8px;
-        text-align: center;
-        font-size: 1.1em;
-        color: #01579b;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: #e0f2f7;
+      padding: 1.5em;
+      margin-bottom: 2em;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.1em;
+      color: #01579b;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     #weather-forecast strong {
-        font-size: 1.3em;
-        color: #01579b;
+      font-size: 1.3em;
+      color: #01579b;
+    }
+    #weather-forecast small {
+      display: block;
+      margin-top: 0.5em;
+      color: #0277bd;
     }
   </style>
 </head>
+
 <body>
-  <div id="weather-forecast">Loading local weather forecast...</div>
 
-  <h1>SE London Presenter Dashboard</h1>
+<div id="weather-forecast">Loading local weather forecast...</div>
 
-  <div class="section" id="transport">
-    <h2>🚇 Public Transport Status</h2>
-    <div>
-      <h3>Tube, Elizabeth, Overground & National Rail Services</h3>
-      <div id="public-transport-status">Loading public transport status...</div>
-    </div>
-    <div>
-      <h3>River Bus</h3>
-      <div id="river">Loading River Bus…</div>
-    </div>
-    <div>
-      <h3>Woolwich Ferry</h3>
-      <div id="ferry">Loading Woolwich Ferry…</div>
-    </div>
+<h1>SE London Presenter Dashboard</h1>
+
+<div class="section" id="transport">
+  <h2>🚇 Public Transport Status</h2>
+
+  <div>
+    <h3>Tube, Elizabeth, Overground & National Rail Services</h3>
+    <div id="public-transport-status">Loading public transport status...</div>
   </div>
+
+  <div>
+    <h3>River Bus</h3>
+    <div id="river">Loading River Bus…</div>
+  </div>
+
+  <div>
+    <h3>Woolwich Ferry</h3>
+    <div id="ferry">Loading Woolwich Ferry…</div>
+  </div>
+</div>
 
 <script>
 const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
-const OPENWEATHER_KEY = "c43b3437c0f093ed56bdc93a115e26a2"; 
+const OPENWEATHER_KEY = "c43b3437c0f093ed56bdc93a115e26a2";
 const NATIONAL_RAIL_API_PROXY_URL = "YOUR_NATIONAL_RAIL_API_PROXY_URL";
 
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
@@ -79,29 +95,37 @@ const SE_LONDON_RAIL_STATIONS = [
 ];
 const TARGET_TOC_CODES = ["SE", "TL"];
 
-/* ---------------- WEATHER ---------------- */
+/* WEATHER */
 async function fetchWeather() {
   const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${WEATHER_LAT}&lon=${WEATHER_LON}&units=metric&appid=${OPENWEATHER_KEY}`;
+  const container = document.getElementById("weather-forecast");
   try {
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(resp.status);
     return await resp.json();
-  } catch {
-    document.getElementById("weather-forecast").textContent = "Weather unavailable";
+  } catch (error) {
+    container.textContent = "Error loading weather";
     return null;
   }
 }
 
-function renderWeather(data) {
-  if (!data) return;
-  const w = data.list[0];
+function renderWeather(weatherData) {
+  if (!weatherData) return;
+  const w = weatherData.list[0];
   document.getElementById("weather-forecast").innerHTML =
     `<strong>SE London Weather</strong><br>
      ${w.weather[0].description}, ${Math.round(w.main.temp)}°C
      (feels like ${Math.round(w.main.feels_like)}°C)`;
 }
 
-/* ---------------- TFL (DLR FIX HERE) ---------------- */
+/* TFL */
+async function fetchTfLStatus(lines) {
+  const url = `https://api.tfl.gov.uk/Line/${lines}/Status?app_key=${TFL_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(res.status);
+  return await res.json();
+}
+
 async function fetchTfLLineStatus(modes) {
   const url = `https://api.tfl.gov.uk/Line/Mode/${modes}/Status?app_key=${TFL_KEY}`;
   const resp = await fetch(url);
@@ -109,72 +133,128 @@ async function fetchTfLLineStatus(modes) {
   return await resp.json();
 }
 
+async function fetchNationalRailDelaysFromProxy() {
+  if (NATIONAL_RAIL_API_PROXY_URL === "YOUR_NATIONAL_RAIL_API_PROXY_URL") return [];
+  try {
+    const params = new URLSearchParams({
+      stations: SE_LONDON_RAIL_STATIONS.join(','),
+      tocs: TARGET_TOC_CODES.join(',')
+    });
+    const url = `${NATIONAL_RAIL_API_PROXY_URL}?${params.toString()}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(resp.status);
+    return await resp.json();
+  } catch {
+    return [];
+  }
+}
+
 async function fetchAndRenderPublicTransportStatus() {
   const container = document.getElementById("public-transport-status");
   container.innerHTML = '';
-
   let combinedList = [];
 
-  // ✅ ONLY CHANGE: added "dlr" to modes
-  const tflLinesData = await fetchTfLLineStatus(
-    "tube,elizabeth-line,overground,dlr"
-  );
+  try {
+    /* ✅ ONLY CHANGE IS HERE */
+    const tflLinesData = await fetchTfLLineStatus(
+      "tube,elizabeth-line,overground,dlr"
+    );
 
-  tflLinesData.forEach(line => {
-    const statusObj = line.lineStatuses?.[0];
-    if (statusObj?.statusSeverity !== 10) {
+    tflLinesData.forEach(line => {
+      const statusObj = line.lineStatuses?.[0];
+      if (statusObj?.statusSeverity !== 10) {
+        combinedList.push({
+          type: 'tfl-line',
+          name: line.name,
+          statusDescription: statusObj.statusSeverityDescription,
+          reason: statusObj.reason || "",
+          displaySeverity: 2
+        });
+      }
+    });
+
+    const railDelaysData = await fetchNationalRailDelaysFromProxy();
+    railDelaysData.forEach(delay => {
       combinedList.push({
-        name: line.name,
-        status: statusObj.statusSeverityDescription,
-        reason: statusObj.reason || "",
-        severity: statusObj.statusSeverity <= 5 ? 1 : 2
+        type: 'national-rail-service',
+        station: delay.station,
+        destination: delay.destination,
+        scheduled: delay.scheduled,
+        expected: delay.expected,
+        status: delay.status,
+        platform: delay.platform,
+        delayReason: delay.delayReason,
+        displaySeverity: delay.status === "Cancelled" ? 1 : 2
       });
+    });
+
+    if (combinedList.length === 0) {
+      container.innerHTML = "<p>All services running with a Good Service / No major delays.</p>";
+      return;
     }
-  });
 
-  if (combinedList.length === 0) {
-    container.innerHTML = "<p>All services running with a Good Service.</p>";
-    return;
+    combinedList.forEach(item => {
+      const d = document.createElement("div");
+      let sevClass = "medium";
+      let emoji = "🟠";
+
+      if (item.displaySeverity === 1) {
+        sevClass = "high";
+        emoji = "🔴";
+      }
+
+      if (item.type === 'tfl-line') {
+        d.className = `item ${sevClass} tube-line-item`;
+        d.innerHTML =
+          `<strong>${emoji} ${item.name}:</strong> ${item.statusDescription}${item.reason ? " – " + item.reason : ""}`;
+      } else {
+        d.className = `item ${sevClass}`;
+        d.innerHTML =
+          `<strong>${emoji} Train from ${item.station} to ${item.destination}</strong><br>
+           Scheduled: ${item.scheduled}, Expected: ${item.expected} (Platform: ${item.platform || 'TBC'})<br>
+           Status: <em>${item.status}</em>${item.delayReason ? ' – ' + item.delayReason : ''}`;
+      }
+      container.appendChild(d);
+    });
+
+  } catch (err) {
+    container.textContent = "Error fetching public transport status";
   }
-
-  combinedList.forEach(item => {
-    const div = document.createElement("div");
-    const sevClass = item.severity === 1 ? "high" : "medium";
-    const emoji = item.severity === 1 ? "🔴" : "🟠";
-    div.className = `item ${sevClass} tube-line-item`;
-    div.innerHTML = `<strong>${emoji} ${item.name}:</strong> ${item.status}${item.reason ? " – " + item.reason : ""}`;
-    container.appendChild(div);
-  });
 }
 
-/* ---------------- RIVER & FERRY ---------------- */
-async function fetchAndRenderOtherStatus(containerId, lines) {
+async function fetchAndRenderOtherStatus(containerId, lines, label) {
   const container = document.getElementById(containerId);
   try {
-    const data = await fetchTfLLineStatus(lines);
+    const data = await fetchTfLStatus(lines);
     container.innerHTML = "";
     data.forEach(line => {
       const s = line.lineStatuses[0];
-      const div = document.createElement("div");
-      div.className = "item medium";
-      div.innerHTML = `<strong>${line.name}:</strong> ${s.statusSeverityDescription}`;
-      container.appendChild(div);
+      const d = document.createElement("div");
+      d.className = "item medium";
+      d.innerHTML =
+        `<strong>${line.name || label}:</strong> ${s.statusSeverityDescription}`;
+      container.appendChild(d);
     });
   } catch {
     container.textContent = "Data unavailable";
   }
 }
 
-/* ---------------- UPDATE LOOP ---------------- */
-async function updateAll() {
-  renderWeather(await fetchWeather());
+async function updateTfL() {
   await fetchAndRenderPublicTransportStatus();
-  await fetchAndRenderOtherStatus("river", "rb1,rb6");
-  await fetchAndRenderOtherStatus("ferry", "woolwich-ferry");
-  setTimeout(updateAll, REFRESH_INTERVAL_MS);
+  await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus");
+  await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry");
+  setTimeout(updateTfL, REFRESH_INTERVAL_MS);
 }
 
-updateAll();
+async function updateWeatherForecast() {
+  renderWeather(await fetchWeather());
+  setTimeout(updateWeatherForecast, WEATHER_REFRESH_INTERVAL_MS);
+}
+
+updateWeatherForecast();
+updateTfL();
 </script>
+
 </body>
 </html>
