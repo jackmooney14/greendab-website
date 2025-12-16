@@ -229,18 +229,40 @@ async function fetchAndRenderOtherStatus(containerId, lines, label) {
   const container = document.getElementById(containerId);
   try {
     const data = await fetchTfLStatus(lines);
+
+    if (!Array.isArray(data) || data.length === 0) {
+      container.textContent = `No ${label} status data available.`;
+      return;
+    }
+
     container.innerHTML = "";
     data.forEach(line => {
-      const s = line.lineStatuses[0];
+      const statusObj = line.lineStatuses?.[0];
+      const status = statusObj?.statusSeverityDescription || "Unknown";
+      const reason = statusObj?.reason || "";
+      const severity = statusObj?.statusSeverity;
+
+      let sevClass = "low";
+      let emoji = "🟢";
+      if (status !== "Good Service") {
+        sevClass = "medium";
+        emoji = "🟠";
+      }
+
       const d = document.createElement("div");
-      d.className = "item medium";
-      d.innerHTML = `<strong>${line.name || label}:</strong> ${s.statusSeverityDescription}`;
+      d.className = `item ${sevClass}`;
+      d.innerHTML = `
+        <strong>${emoji} ${line.name || label}:</strong> ${status}
+        ${reason ? `<br><small>${reason}</small>` : ""}
+        <small style="display:block; opacity:0.6;">Severity: ${severity}</small>
+      `;
       container.appendChild(d);
     });
-  } catch {
-    container.textContent = "Data unavailable";
+  } catch (err) {
+    container.textContent = `Error fetching ${label} status: ${err.message}`;
   }
 }
+
 
 async function updateTfL() {
   await fetchAndRenderPublicTransportStatus();
