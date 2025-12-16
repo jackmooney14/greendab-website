@@ -1,1 +1,262 @@
-.low { border-color: #43a047; } .tube-line-item { display: flex; align-items: center; } .tube-line-item strong { margin-right: 0.5em; } /* Weather Forecast Styling */ #weather-forecast { background: #e0f2f7; padding: 1.5em; margin-bottom: 2em; border-radius: 8px; text-align: center; font-size: 1.1em; color: #01579b; box-shadow: 0 2px 4px rgba(0,0,0,0.1); } #weather-forecast strong { font-size: 1.3em; color: #01579b; } #weather-forecast small { display: block; margin-top: 0.5em; color: #0277bd; } </style> </head> <body> <div id="weather-forecast">Loading local weather forecast...</div> <h1>SE London Presenter Dashboard</h1> <div class="section" id="transport"> <h2>🚇 Public Transport Status</h2> <div> <h3>Tube, Elizabeth, Overground & National Rail Services</h3> <div id="public-transport-status">Loading public transport status...</div> </div> <div> <h3>River Bus</h3> <div id="river">Loading River Bus…</div> </div> <div> <h3>Woolwich Ferry</h3> <div id="ferry">Loading Woolwich Ferry…</div> </div> </div> <script> const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe"; const OPENWEATHER_KEY = "c43b3437c0f093ed56bdc93a115e26a2"; const NATIONAL_RAIL_API_PROXY_URL = "YOUR_NATIONAL_RAIL_API_PROXY_URL"; const REFRESH_INTERVAL_MS = 5 * 60 * 1000; const WEATHER_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000; const RAIL_REFRESH_INTERVAL_MS = 2 * 60 * 1000; const WEATHER_LAT = 51.48; const WEATHER_LON = 0.0; const SE_LONDON_RAIL_STATIONS = [ "LBG","CHX","WAE","LEW","GRN","DFD","BMS","ORP","ECR","VIC" ]; const TARGET_TOC_CODES = ["SE", "TL"]; // --- Weather Forecast Functions --- async function fetchWeather() { const url = https://api.openweathermap.org/data/2.5/forecast?lat=${WEATHER_LAT}&lon=${WEATHER_LON}&units=metric&appid=${OPENWEATHER_KEY}; const container = document.getElementById("weather-forecast"); try { const resp = await fetch(url); if (!resp.ok) throw new Error(OpenWeatherMap error ${resp.status}); return await resp.json(); } catch (error) { console.error("Error fetching weather data:", error); container.textContent = Error loading weather: ${error.message}; return null; } } function renderWeather(weatherData) { const container = document.getElementById("weather-forecast"); if (!weatherData) return; const forecastList = weatherData.list; const city = "South East London"; if (!forecastList || forecastList.length === 0) { container.textContent = "Weather forecast data unavailable."; return; } const now = new Date(); const currentHour = now.getHours(); const currentWeather = forecastList[0]; const currentDescription = currentWeather.weather[0].description; const currentTemp = Math.round(currentWeather.main.temp); const feelsLike = Math.round(currentWeather.main.feels_like); let greeting = "Hello"; if (currentHour >= 5 && currentHour < 12) { greeting = "Good morning"; } else if (currentHour >= 12 && currentHour < 18) { greeting = "Good afternoon"; } else if (currentHour >= 18 && currentHour < 22) { greeting = "Good evening"; } else { greeting = "Good night"; } const detailedForecast = Currently in ${city}, it's ${currentDescription} at ${currentTemp}°C, feeling like ${feelsLike}°C.; container.innerHTML = <strong>${greeting}!</strong> ${detailedForecast}; } // --- Public Transport Functions --- async function fetchTfLStatus(lines) { const url = https://api.tfl.gov.uk/Line/${lines}/Status?app_key=${TFL_KEY}; const res = await fetch(url); if (!res.ok) throw new Error(TfL API error: ${res.status}); return await res.json(); } async function fetchTfLLineStatus(modes) { const url = https://api.tfl.gov.uk/Line/Mode/${modes}/Status?app_key=${TFL_KEY}; const resp = await fetch(url); if (!resp.ok) throw new Error(TfL Line Status API error: ${resp.status}); return await resp.json(); } async function fetchNationalRailDelaysFromProxy() { if (NATIONAL_RAIL_API_PROXY_URL === "YOUR_NATIONAL_RAIL_API_PROXY_URL") return []; try { const params = new URLSearchParams({ stations: SE_LONDON_RAIL_STATIONS.join(','), tocs: TARGET_TOC_CODES.join(',') }); const url = ${NATIONAL_RAIL_API_PROXY_URL}?${params.toString()}; const resp = await fetch(url); if (!resp.ok) throw new Error(Rail Proxy error: ${resp.status}); return await resp.json(); } catch (error) { console.error("Error fetching National Rail data:", error); return []; } } async function fetchAndRenderPublicTransportStatus() { const container = document.getElementById("public-transport-status"); container.innerHTML = ''; let combinedList = []; try { const tflLinesData = await fetchTfLLineStatus("tube,elizabeth-line,overground"); tflLinesData.forEach(line => { const statusObj = line.lineStatuses?.[0]; if (statusObj?.statusSeverity !== 10) { combinedList.push({ type: 'tfl-line', name: line.name, statusDescription: statusObj?.statusSeverityDescription || "Status unknown", reason: statusObj?.reason || "", displaySeverity: 2 }); } }); const railDelaysData = await fetchNationalRailDelaysFromProxy(); railDelaysData.forEach(delay => { combinedList.push({ type: 'national-rail-service', station: delay.station, destination: delay.destination, scheduled: delay.scheduled, expected: delay.expected, status: delay.status, platform: delay.platform, delayReason: delay.delayReason, displaySeverity: delay.status === "Cancelled" ? 1 : 2 }); }); if (combinedList.length === 0) { container.innerHTML = "<p>All services running with a Good Service / No major delays.</p>"; return; } combinedList.forEach(item => { const d = document.createElement("div"); let sevClass = "low"; let emoji = "🟢"; if (item.displaySeverity === 1) { sevClass = "high"; emoji = "🔴"; } else if (item.displaySeverity === 2) { sevClass = "medium"; emoji = "🟠"; } if (item.type === 'tfl-line') { d.className = item ${sevClass} tube-line-item; d.innerHTML = <strong>${emoji} ${item.name}:</strong> ${item.statusDescription}${item.reason ? " – " + item.reason : ""}; } else if (item.type === 'national-rail-service') { d.className = item ${sevClass}; d.innerHTML = <strong>${emoji} Train from ${item.station} to ${item.destination}</strong><br> Scheduled: ${item.scheduled}, Expected: ${item.expected} (Platform: ${item.platform || 'TBC'})<br> Status: <em>${item.status}</em>${item.delayReason ? ' – ' + item.delayReason : ''} ; } container.appendChild(d); }); } catch (err) { container.textContent = "Error fetching public transport status: " + err.message; } } async function fetchAndRenderOtherStatus(containerId, lines, label) { const container = document.getElementById(containerId); try { const data = await fetchTfLStatus(lines); if (!Array.isArray(data) || data.length === 0) { container.textContent = No ${label} status data available.; return; } container.innerHTML = ""; data.forEach(line => { const statusObj = line.lineStatuses?.[0]; const status = statusObj?.statusSeverityDescription || "Unknown"; const reason = statusObj?.reason || ""; let sevClass = "low"; let emoji = "🟢"; if (status !== "Good Service") { sevClass = "medium"; emoji = "🟠"; } const d = document.createElement("div"); d.className = item ${sevClass}; d.innerHTML = <strong>${emoji} ${line.name || label}:</strong> ${status}${reason ? " – " + reason : ""}; container.appendChild(d); }); } catch (err) { container.textContent = Error fetching ${label} status: + err.message; } } // --- Update functions --- async function updateTfL() { await fetchAndRenderPublicTransportStatus(); await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus"); await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry"); setTimeout(updateTfL, REFRESH_INTERVAL_MS); } async function updateWeatherForecast() { const weatherData = await fetchWeather(); renderWeather(weatherData); setTimeout(updateWeatherForecast, WEATHER_REFRESH_INTERVAL_MS); } // Initial calls updateWeatherForecast(); updateTfL(); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SE London Presenter Dashboard</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2em;
+      max-width: 900px;
+      margin: auto;
+      background: #fafafa;
+    }
+    h1, h2, h3 { text-align: center; }
+    .section { margin-bottom: 2em; }
+    .item {
+      background: white;
+      padding: 1em;
+      margin-bottom: .8em;
+      border-left: 6px solid;
+      border-radius: 5px;
+    }
+    .high { border-color: #e53935; }
+    .medium { border-color: #fb8c00; }
+    .low { border-color: #43a047; }
+
+    .tube-line-item {
+      display: flex;
+      align-items: center;
+    }
+    .tube-line-item strong {
+      margin-right: 0.5em;
+    }
+
+    #weather-forecast {
+      background: #e0f2f7;
+      padding: 1.5em;
+      margin-bottom: 2em;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.1em;
+      color: #01579b;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #weather-forecast strong {
+      font-size: 1.3em;
+      color: #01579b;
+    }
+    #weather-forecast small {
+      display: block;
+      margin-top: 0.5em;
+      color: #0277bd;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="weather-forecast">Loading local weather forecast...</div>
+
+<h1>SE London Presenter Dashboard</h1>
+
+<div class="section" id="transport">
+  <h2>🚇 Public Transport Status</h2>
+
+  <div>
+    <h3>Tube, DLR, Elizabeth, Overground & National Rail Services</h3>
+    <div id="public-transport-status">Loading public transport status...</div>
+  </div>
+
+  <div>
+    <h3>River Bus</h3>
+    <div id="river">Loading River Bus…</div>
+  </div>
+
+  <div>
+    <h3>Woolwich Ferry</h3>
+    <div id="ferry">Loading Woolwich Ferry…</div>
+  </div>
+</div>
+
+<script>
+const TFL_KEY = "044bd54cfdc94f03ba10314d52eb59fe";
+const OPENWEATHER_KEY = "c43b3437c0f093ed56bdc93a115e26a2";
+const NATIONAL_RAIL_API_PROXY_URL = "YOUR_NATIONAL_RAIL_API_PROXY_URL";
+
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const WEATHER_REFRESH_INTERVAL_MS = 2 * 60 * 60 * 1000;
+
+const WEATHER_LAT = 51.48;
+const WEATHER_LON = 0.0;
+
+const SE_LONDON_RAIL_STATIONS = [
+  "LBG","CHX","WAE","LEW","GRN","DFD","BMS","ORP","ECR","VIC"
+];
+const TARGET_TOC_CODES = ["SE", "TL"];
+
+/* WEATHER */
+async function fetchWeather() {
+  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${WEATHER_LAT}&lon=${WEATHER_LON}&units=metric&appid=${OPENWEATHER_KEY}`;
+  const container = document.getElementById("weather-forecast");
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(resp.status);
+    return await resp.json();
+  } catch (error) {
+    container.textContent = `Error loading weather: ${error.message}`;
+    return null;
+  }
+}
+
+function renderWeather(weatherData) {
+  const container = document.getElementById("weather-forecast");
+  if (!weatherData) return;
+
+  const current = weatherData.list[0];
+  const description = current.weather[0].description;
+  const temp = Math.round(current.main.temp);
+  const feels = Math.round(current.main.feels_like);
+
+  container.innerHTML =
+    `<strong>SE London Weather</strong><br>
+     ${description}, ${temp}°C (feels like ${feels}°C)`;
+}
+
+/* TFL */
+async function fetchTfLStatus(lines) {
+  const url = `https://api.tfl.gov.uk/Line/${lines}/Status?app_key=${TFL_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(res.status);
+  return await res.json();
+}
+
+async function fetchTfLLineStatus(modes) {
+  const url = `https://api.tfl.gov.uk/Line/Mode/${modes}/Status?app_key=${TFL_KEY}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(resp.status);
+  return await resp.json();
+}
+
+async function fetchNationalRailDelaysFromProxy() {
+  if (NATIONAL_RAIL_API_PROXY_URL === "YOUR_NATIONAL_RAIL_API_PROXY_URL") return [];
+
+  try {
+    const params = new URLSearchParams({
+      stations: SE_LONDON_RAIL_STATIONS.join(","),
+      tocs: TARGET_TOC_CODES.join(",")
+    });
+    const url = `${NATIONAL_RAIL_API_PROXY_URL}?${params}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(resp.status);
+    return await resp.json();
+  } catch {
+    return [];
+  }
+}
+
+async function fetchAndRenderPublicTransportStatus() {
+  const container = document.getElementById("public-transport-status");
+  container.innerHTML = "";
+  let combinedList = [];
+
+  try {
+    /* ✅ ONLY ADDITION: DLR INCLUDED */
+    const tflLinesData = await fetchTfLLineStatus(
+      "tube,elizabeth-line,overground,dlr"
+    );
+
+    tflLinesData.forEach(line => {
+      const s = line.lineStatuses?.[0];
+      if (s?.statusSeverity !== 10) {
+        combinedList.push({
+          type: "tfl-line",
+          name: line.name,
+          status: s.statusSeverityDescription,
+          reason: s.reason || "",
+          severity: 2
+        });
+      }
+    });
+
+    const railDelays = await fetchNationalRailDelaysFromProxy();
+    railDelays.forEach(d => {
+      combinedList.push({
+        type: "rail",
+        ...d,
+        severity: d.status === "Cancelled" ? 1 : 2
+      });
+    });
+
+    if (combinedList.length === 0) {
+      container.innerHTML =
+        "<p>All services running with a Good Service / No major delays.</p>";
+      return;
+    }
+
+    combinedList.forEach(item => {
+      const div = document.createElement("div");
+      let sevClass = "medium";
+      let emoji = "🟠";
+
+      if (item.severity === 1) {
+        sevClass = "high";
+        emoji = "🔴";
+      }
+
+      if (item.type === "tfl-line") {
+        div.className = `item ${sevClass} tube-line-item`;
+        div.innerHTML =
+          `<strong>${emoji} ${item.name}:</strong> ${item.status}${item.reason ? " – " + item.reason : ""}`;
+      } else {
+        div.className = `item ${sevClass}`;
+        div.innerHTML =
+          `<strong>${emoji} Train from ${item.station} to ${item.destination}</strong><br>
+           Scheduled: ${item.scheduled}, Expected: ${item.expected} (Platform: ${item.platform || "TBC"})<br>
+           Status: <em>${item.status}</em>${item.delayReason ? " – " + item.delayReason : ""}`;
+      }
+
+      container.appendChild(div);
+    });
+
+  } catch (err) {
+    container.textContent = "Error fetching public transport status";
+  }
+}
+
+async function fetchAndRenderOtherStatus(containerId, lines, label) {
+  const container = document.getElementById(containerId);
+  try {
+    const data = await fetchTfLStatus(lines);
+    container.innerHTML = "";
+    data.forEach(line => {
+      const s = line.lineStatuses[0];
+      const d = document.createElement("div");
+      d.className = "item medium";
+      d.innerHTML = `<strong>${line.name || label}:</strong> ${s.statusSeverityDescription}`;
+      container.appendChild(d);
+    });
+  } catch {
+    container.textContent = "Data unavailable";
+  }
+}
+
+async function updateTfL() {
+  await fetchAndRenderPublicTransportStatus();
+  await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus");
+  await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry");
+  setTimeout(updateTfL, REFRESH_INTERVAL_MS);
+}
+
+async function updateWeatherForecast() {
+  renderWeather(await fetchWeather());
+  setTimeout(updateWeatherForecast, WEATHER_REFRESH_INTERVAL_MS);
+}
+
+updateWeatherForecast();
+updateTfL();
+</script>
+
+</body>
+</html>
