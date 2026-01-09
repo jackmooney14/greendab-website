@@ -122,3 +122,32 @@ footer a:hover {
         padding: 0 15px; /* Reduced padding for smaller screens */
     }
 }
+
+/* Rates table styling (PDF-like) */
+.rates-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.rates-table th,
+.rates-table td {
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.rates-table thead th {
+  background: rgba(90, 130, 170, 0.35); /* soft blue-grey like the PDF */
+  font-weight: 700;
+}
+
+.rates-table .rates-subhead th {
+  background: rgba(90, 130, 170, 0.25);
+  font-weight: 700;
+}
+
+.rates-table th[scope="row"] {
+  font-weight: 700; /* bold bitrates like PDF */
+}
