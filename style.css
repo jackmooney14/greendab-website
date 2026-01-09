@@ -123,31 +123,26 @@ footer a:hover {
     }
 }
 
-/* Rates table styling (PDF-like) */
-.rates-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+/* Fix box sizing globally */
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-.rates-table th,
-.rates-table td {
-  border: 1px solid rgba(0, 0, 0, 0.35);
-  padding: 10px 12px;
+/* Make rates section content readable */
+#rates {
   text-align: left;
-  vertical-align: middle;
 }
 
+/* Keep headings centered on rates page */
+#rates h2, #rates h3 {
+  text-align: center;
+}
+
+/* Make table headers match green branding */
 .rates-table thead th {
-  background: rgba(90, 130, 170, 0.35); /* soft blue-grey like the PDF */
-  font-weight: 700;
+  background: rgba(77, 126, 62, 0.20);
 }
 
 .rates-table .rates-subhead th {
-  background: rgba(90, 130, 170, 0.25);
-  font-weight: 700;
-}
-
-.rates-table th[scope="row"] {
-  font-weight: 700; /* bold bitrates like PDF */
+  background: rgba(77, 126, 62, 0.12);
 }
