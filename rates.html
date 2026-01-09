@@ -1,172 +1,141 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Carriage Fees | greenDAB</title>
-
-  <!-- Use your existing site styling -->
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- Optional: lightweight table styling just for this page -->
-  <style>
-    .table-wrap { overflow-x: auto; }
-    .rates-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    .rates-table th, .rates-table td {
-      padding: 0.75rem;
-      border-bottom: 1px solid rgba(0,0,0,0.12);
-      text-align: left;
-      vertical-align: top;
-      white-space: nowrap;
-    }
-    .rates-table thead th { border-bottom: 2px solid rgba(0,0,0,0.2); }
-    .rates-section { margin: 2rem 0; }
-    .rates-text h3 { margin: 1.25rem 0 0.25rem; }
-    .rates-note { font-size: 0.95rem; opacity: 0.85; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>greenDAB - Rates</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <!--
-    Keep your existing header/nav here if your site uses one.
-    If you normally copy a header from another page, paste it above <main>.
-  -->
-
-  <main class="container">
-    <header class="page-header">
-      <h1>Carriage Fees</h1>
-      <p class="rates-note">
-        <strong>greenDAB</strong>, South East London and North West Kent Multiplex
-      </p>
+    <header>
+        <img src="logo.png" alt="greendab logo" width="150">
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="rates.html">Rates</a></li>
+                <li><a href="coverage.html">Coverage</a></li>
+                <li><a href="community.html">Community</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
     </header>
 
-    <section class="rates-section" aria-labelledby="dabplus">
-      <h2 id="dabplus">DAB+ Rates</h2>
-      <p class="rates-note">Monthly carriage fees by bitrate.</p>
+    <main>
+        <div class="content-wrapper">
+            <section id="rates">
+                <h2>Carriage Fees</h2>
 
-      <div class="table-wrap" role="region" aria-label="DAB+ rates table" tabindex="0">
-        <table class="rates-table">
-          <thead>
-            <tr>
-              <th scope="col">Bitrate</th>
-              <th scope="col">Bid Partner Monthly Carriage Fee</th>
-              <th scope="col">Reserved Capacity (C-DSP)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>24 kbps</td>
-              <td>£99.00</td>
-              <td>£252.00</td>
-            </tr>
-            <tr>
-              <td>32 kbps</td>
-              <td>£132.00</td>
-              <td>£336.00</td>
-            </tr>
-            <tr>
-              <td>40 kbps</td>
-              <td>£165.00</td>
-              <td>£420.00</td>
-            </tr>
-            <tr>
-              <td>48 kbps</td>
-              <td>£198.00</td>
-              <td>£499.00</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+                <p><strong>greenDAB</strong>, South East London and North West Kent Multiplex</p>
 
-      <p class="rates-note">
-        If you would like DAB+ <em>Unreserved Capacity (DSP)</em> listed as well, add the prices and we’ll include the column.
-      </p>
-    </section>
+                <h3>DAB+ Rates</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bitrate</th>
+                            <th>Bid Partner Monthly Carriage Fee</th>
+                            <th>Reserved Capacity (C-DSP)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>24 kbps</td>
+                            <td>£99.00</td>
+                            <td>£252.00</td>
+                        </tr>
+                        <tr>
+                            <td>32 kbps</td>
+                            <td>£132.00</td>
+                            <td>£336.00</td>
+                        </tr>
+                        <tr>
+                            <td>40 kbps</td>
+                            <td>£165.00</td>
+                            <td>£420.00</td>
+                        </tr>
+                        <tr>
+                            <td>48 kbps</td>
+                            <td>£198.00</td>
+                            <td>£499.00</td>
+                        </tr>
+                    </tbody>
+                </table>
 
-    <section class="rates-section" aria-labelledby="dab">
-      <h2 id="dab">DAB Rates</h2>
-      <p class="rates-note">Reserved vs Unreserved capacity pricing.</p>
+                <h3>DAB Rates</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Bitrate</th>
+                            <th>Reserved Capacity (C-DSP)</th>
+                            <th>Unreserved Capacity (DSP)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>56 kbps</td>
+                            <td>£231.00</td>
+                            <td>£588.00</td>
+                        </tr>
+                        <tr>
+                            <td>64 kbps</td>
+                            <td>£264.00</td>
+                            <td>£672.00</td>
+                        </tr>
+                        <tr>
+                            <td>80 kbps</td>
+                            <td>£318.00</td>
+                            <td>£811.20</td>
+                        </tr>
+                        <tr>
+                            <td>96 kbps</td>
+                            <td>£384.00</td>
+                            <td>£980.00</td>
+                        </tr>
+                        <tr>
+                            <td>112 kbps</td>
+                            <td>£462.00</td>
+                            <td>£1,176.00</td>
+                        </tr>
+                        <tr>
+                            <td>128 kbps</td>
+                            <td>£528.00</td>
+                            <td>£1,344.00</td>
+                        </tr>
+                    </tbody>
+                </table>
 
-      <div class="table-wrap" role="region" aria-label="DAB rates table" tabindex="0">
-        <table class="rates-table">
-          <thead>
-            <tr>
-              <th scope="col">Bitrate</th>
-              <th scope="col">Reserved Capacity (C-DSP)</th>
-              <th scope="col">Unreserved Capacity (DSP)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>56 kbps</td>
-              <td>£231.00</td>
-              <td>£588.00</td>
-            </tr>
-            <tr>
-              <td>64 kbps</td>
-              <td>£264.00</td>
-              <td>£672.00</td>
-            </tr>
-            <tr>
-              <td>80 kbps</td>
-              <td>£318.00</td>
-              <td>£811.20</td>
-            </tr>
-            <tr>
-              <td>96 kbps</td>
-              <td>£384.00</td>
-              <td>£980.00</td>
-            </tr>
-            <tr>
-              <td>112 kbps</td>
-              <td>£462.00</td>
-              <td>£1,176.00</td>
-            </tr>
-            <tr>
-              <td>128 kbps</td>
-              <td>£528.00</td>
-              <td>£1,344.00</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+                <h3>Terms</h3>
 
-    <section class="rates-section" aria-labelledby="terms">
-      <h2 id="terms">Terms &amp; Conditions</h2>
+                <p>
+                    <strong>Term:</strong> The minimum term will be 3 months from the Commencement Date with automatic
+                    renewal thereafter until or unless determined by either party on not less than 3 months written
+                    notice.
+                </p>
 
-      <div class="rates-text">
-        <h3>Term</h3>
-        <p>
-          The minimum term will be 3 months from the Commencement Date with automatic renewal thereafter
-          until or unless determined by either party on not less than 3 months written notice.
-        </p>
+                <p>
+                    <strong>Carriage Fee:</strong> The indicative fees for each bitrate are detailed above and will be
+                    payable monthly in advance. (There is no requirement to make a selection at this time).
+                </p>
 
-        <h3>Carriage Fee</h3>
-        <p>
-          The indicative fees for each bitrate are detailed above and will be payable monthly in advance.
-          (There is no requirement to make a selection at this time).
-        </p>
+                <p>
+                    <strong>Statutory Consents:</strong> The Service Provider will need to obtain all necessary statutory
+                    consents including but not limited to a C-DSP/DSP licence from Ofcom.
+                </p>
 
-        <h3>Statutory Consents</h3>
-        <p>
-          The Service Provider will need to obtain all necessary statutory consents including but not limited to
-          a C-DSP/DSP licence from Ofcom.
-        </p>
+                <p>
+                    <strong>Assignment:</strong> Nothing contained herein constitutes a guarantee of carriage. In the
+                    event of over subscription, Multiplex Company will offer carriage to services that signed Heads of
+                    Terms (Bid Partners) before the award of licence.
+                </p>
+            </section>
+        </div>
+    </main>
 
-        <h3>Assignment</h3>
-        <p>
-          Nothing contained herein constitutes a guarantee of carriage. In the event of over subscription,
-          Multiplex Company will offer carriage to services that signed Heads of Terms (Bid Partners) before
-          the award of licence.
-        </p>
-      </div>
-    </section>
-  </main>
-
-  <!--
-    Keep your existing footer here if your site uses one.
-    If you normally copy a footer from another page, paste it below </main>.
-  -->
+    <footer>
+        <p>&copy; 2025 greenDAB Limited. All rights reserved.</p>
+    </footer>
 </body>
+
 </html>
