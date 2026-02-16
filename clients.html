@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>greenDAB - Clients</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <img src="logo.png" alt="greendab logo" width="150">
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="rates.html">Rates</a></li>
+                <li><a href="coverage.html">Coverage</a></li>
+                <li><a href="community.html">Community</a></li>
+                <li><a href="clients.html">Clients</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="content-wrapper">
+            <section id="clients">
+                <h2>Our Clients</h2>
+
+                <p style="text-align: center; font-size: 1.2rem; margin-bottom: 30px;">
+                    Here are all our current services
+                </p>
+
+                <!-- Logos will be injected here automatically -->
+                <div class="clients-logos" id="clientsLogos" style="text-align:center;"></div>
+
+                <p id="clientsStatus" style="text-align:center; margin-top: 15px;"></p>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 greenDAB Limited. All rights reserved.</p>
+    </footer>
+
+    <script>
+        /**
+         * Auto-load station logos from your GitHub repo folder:
+         * greendab-website/assets/logos/
+         */
+        const owner = "jackmooney14";
+        const repo = "greendab-website";
+        const path = "assets/logos"; // <-- greendab-website/assets/logos/
+
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+        const container = document.getElementById("clientsLogos");
+        const statusEl = document.getElementById("clientsStatus");
+
+        statusEl.textContent = "Loading logos...";
+
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(items => {
+                const imageFiles = items
+                    .filter(i => i.type === "file" && /\.(png|jpe?g|svg|webp)$/i.test(i.name));
+
+                if (imageFiles.length === 0) {
+                    statusEl.textContent = "No logos found in assets/logos.";
+                    return;
+                }
+
+                // Clear status
+                statusEl.textContent = "";
+
+                imageFiles.forEach(file => {
+                    const img = document.createElement("img");
+                    img.src = file.download_url;   // direct raw image URL
+                    img.alt = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") + " logo";
+                    img.width = 150;
+                    img.loading = "lazy";
+                    img.style.margin = "15px";
+                    container.appendChild(img);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                statusEl.textContent = "Could not load logos. Check the repo is public and the folder path is correct.";
+            });
+    </script>
+</body>
+
+</html>
