@@ -10,17 +10,37 @@
     <style>
         /* ===== greenDAB / broadcast-style table ===== */
         :root{
-            /* Subtle brand accents (tweak these if you have exact brand colours) */
+            /* Subtle brand accents (tweak if you have exact brand colours) */
             --gd-green: #1f8f4a;
             --gd-green-ink: #156a36;
 
-            --ink: #0f172a;          /* slate-ish */
-            --muted: #475569;
+            /* Set “default ink” + muted text to green tones so ALL page text follows */
+            --ink: var(--gd-green-ink);
+            --muted: #2c6b45;
+
             --line: #e5e7eb;
             --panel: #ffffff;
             --panel-2: #f8fafc;
             --shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
             --radius: 16px;
+        }
+
+        /* Make page text green by default (everything inherits unless overridden) */
+        body{
+            color: var(--ink);
+        }
+
+        /* Make headings + links use brand green */
+        h1, h2, h3, h4, h5, h6{
+            color: var(--gd-green);
+        }
+
+        a{
+            color: var(--gd-green);
+        }
+
+        a:hover{
+            color: var(--gd-green-ink);
         }
 
         /* Container/panel */
@@ -44,8 +64,6 @@
 
         .rates-card-header h2{
             margin: 0;
-            color: var(--ink);
-            font-size: 1.6rem;
             letter-spacing: -0.02em;
         }
 
@@ -57,7 +75,7 @@
 
         .table-container{
             width: 100%;
-            overflow: hidden; /* we do stacked mobile, so no need for x-scroll */
+            overflow: hidden; /* stacked mobile handles responsiveness */
         }
 
         /* Desktop table */
@@ -69,7 +87,7 @@
 
         .rates-table thead th{
             background: var(--panel-2);
-            color: var(--ink);
+            color: var(--gd-green-ink);
             font-weight: 700;
             font-size: 0.95rem;
             padding: 14px 14px;
@@ -114,19 +132,19 @@
 
         /* Row hover highlight */
         .rates-table tbody tr{
-            transition: background 160ms ease, transform 160ms ease;
+            transition: background 160ms ease;
         }
 
         .rates-table tbody tr:hover{
             background: rgba(31,143,74,0.06);
         }
 
-        /* Add a subtle left accent on hover for “premium” feel */
+        /* Premium left accent on hover */
         .rates-table tbody tr:hover th{
             box-shadow: inset 4px 0 0 rgba(31,143,74,0.55);
         }
 
-        /* Rounded corners for the whole table within the card */
+        /* Rounded corners */
         .rates-table thead tr:first-child th:first-child{
             border-top-left-radius: var(--radius);
         }
@@ -134,10 +152,9 @@
             border-top-right-radius: var(--radius);
         }
 
-        /* Terms typography to match modern broadcast docs */
+        /* Terms typography */
         #rates h3{
             margin-top: 28px;
-            color: var(--ink);
             letter-spacing: -0.01em;
         }
         #rates p{
@@ -156,7 +173,7 @@
             .rates-card-header p{ font-size: 0.95rem; }
 
             .rates-table thead{
-                display: none; /* hide header on small screens */
+                display: none;
             }
 
             .rates-table,
@@ -174,7 +191,6 @@
                 padding: 10px 14px;
             }
 
-            /* Make each row feel like a mini-card */
             .rates-table tbody tr:hover{
                 background: rgba(31,143,74,0.05);
             }
@@ -192,7 +208,6 @@
                 color: var(--ink);
             }
 
-            /* Add labels using data-label attributes */
             .rates-table tbody td::before{
                 content: attr(data-label);
                 display: block;
@@ -204,7 +219,6 @@
                 margin-bottom: 2px;
             }
 
-            /* DAB divider row becomes a section chip */
             .rates-table .rates-subhead{
                 padding: 12px 14px;
                 background: rgba(31,143,74,0.10);
@@ -215,7 +229,7 @@
                 box-shadow: none !important;
             }
             .rates-table .rates-subhead th:not(:first-child){
-                display: none; /* only show “DAB” label */
+                display: none;
             }
         }
     </style>
@@ -244,7 +258,7 @@
                 <div class="rates-card">
                     <div class="rates-card-header">
                         <h2>Carriage Fees</h2>
-                        <p>Clear, broadcast-ready pricing with a subtle greenDAB accent.</p>
+                        <p>Here are the current carriage fees for DAB+ and DAB services.</p>
                     </div>
 
                     <div class="table-container">
