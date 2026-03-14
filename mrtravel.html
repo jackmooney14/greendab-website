@@ -78,6 +78,11 @@
     <h3>Tube, DLR, Elizabeth, Overground & National Rail Services</h3>
     <div id="public-transport-status">Loading public transport status...</div>
   </div>
+
+  <div>
+    <h3>River Bus</h3>
+    <div id="river-bus">Loading River Bus status...</div>
+  </div>
 </div>
 
 <div class="section" id="river-crossings-section">
@@ -101,6 +106,11 @@ const SE_LONDON_RAIL_STATIONS = [
 ];
 
 const TARGET_TOC_CODES = ["SE", "TL"];
+
+const RIVER_BUS_LINES = [
+  "rb1",
+  "rb6"
+];
 
 const ROAD_CROSSINGS = [
   "blackwall tunnel",
@@ -256,13 +266,16 @@ function buildStatusCard({ name, status, detail, severity, goodLabel = "Good Ser
   let sevClass = "low";
   let emoji = "🟢";
 
-  const normalizedStatus = (status || "").toLowerCase();
-  const normalizedDetail = (detail || "").toLowerCase();
+  const normalizedStatus = (status || "").trim().toLowerCase();
+  const normalizedDetail = (detail || "").trim().toLowerCase();
+  const normalizedGoodLabel = (goodLabel || "").trim().toLowerCase();
 
-  if (
-    normalizedStatus !== goodLabel.toLowerCase() &&
-    normalizedStatus !== "good"
-  ) {
+  const isGood =
+    normalizedStatus === normalizedGoodLabel ||
+    normalizedStatus === "good" ||
+    normalizedStatus === "good service";
+
+  if (!isGood) {
     sevClass = "medium";
     emoji = "🟠";
   }
@@ -286,6 +299,35 @@ function buildStatusCard({ name, status, detail, severity, goodLabel = "Good Ser
   return div;
 }
 
+async function fetchAndRenderRiverBus() {
+  const container = document.getElementById("river-bus");
+  container.innerHTML = "";
+
+  try {
+    const data = await fetchTfLStatus(RIVER_BUS_LINES.join(","));
+
+    if (!Array.isArray(data) || data.length === 0) {
+      container.innerHTML = "<p>No River Bus status data available.</p>";
+      return;
+    }
+
+    data.forEach(line => {
+      const statusObj = line.lineStatuses?.[0] || {};
+      container.appendChild(
+        buildStatusCard({
+          name: line.name || line.id || "River Bus",
+          status: statusObj.statusSeverityDescription || "Unknown",
+          detail: statusObj.reason || "",
+          severity: statusObj.statusSeverity,
+          goodLabel: "Good Service"
+        })
+      );
+    });
+  } catch (err) {
+    container.textContent = `Error fetching River Bus status: ${err.message}`;
+  }
+}
+
 async function fetchAndRenderRiverCrossings() {
   const container = document.getElementById("river-crossings");
   container.innerHTML = "";
@@ -305,7 +347,8 @@ async function fetchAndRenderRiverCrossings() {
           name: line.name || "Woolwich Ferry",
           status: statusObj.statusSeverityDescription || "Unknown",
           detail: statusObj.reason || "",
-          severity: statusObj.statusSeverity
+          severity: statusObj.statusSeverity,
+          goodLabel: "Good Service"
         });
       });
     }
@@ -317,7 +360,8 @@ async function fetchAndRenderRiverCrossings() {
           name: road.displayName || road.id,
           status: road.statusSeverityDescription || statusObj.statusSeverityDescription || "Unknown",
           detail: statusObj.description || statusObj.text || "",
-          severity: road.statusSeverity
+          severity: road.statusSeverity,
+          goodLabel: "Good"
         });
       });
     }
@@ -338,6 +382,7 @@ async function fetchAndRenderRiverCrossings() {
 
 async function updateTfL() {
   await fetchAndRenderPublicTransportStatus();
+  await fetchAndRenderRiverBus();
   await fetchAndRenderRiverCrossings();
   setTimeout(updateTfL, REFRESH_INTERVAL_MS);
 }
