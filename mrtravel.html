@@ -11,15 +11,23 @@
       margin: auto;
       background: #fafafa;
     }
-    h1, h2, h3 { text-align: center; }
-    .section { margin-bottom: 2em; }
+
+    h1, h2, h3 {
+      text-align: center;
+    }
+
+    .section {
+      margin-bottom: 2em;
+    }
+
     .item {
       background: white;
       padding: 1em;
-      margin-bottom: .8em;
+      margin-bottom: 0.8em;
       border-left: 6px solid;
       border-radius: 5px;
     }
+
     .high { border-color: #e53935; }
     .medium { border-color: #fb8c00; }
     .low { border-color: #43a047; }
@@ -28,6 +36,7 @@
       display: flex;
       align-items: center;
     }
+
     .tube-line-item strong {
       margin-right: 0.5em;
     }
@@ -42,10 +51,12 @@
       color: #01579b;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
     #weather-forecast strong {
       font-size: 1.3em;
       color: #01579b;
     }
+
     #weather-forecast small {
       display: block;
       margin-top: 0.5em;
@@ -67,16 +78,11 @@
     <h3>Tube, DLR, Elizabeth, Overground & National Rail Services</h3>
     <div id="public-transport-status">Loading public transport status...</div>
   </div>
+</div>
 
-  <div>
-    <h3>River Bus</h3>
-    <div id="river">Loading River Bus…</div>
-  </div>
-
-  <div>
-    <h3>Woolwich Ferry</h3>
-    <div id="ferry">Loading Woolwich Ferry…</div>
-  </div>
+<div class="section" id="river-crossings-section">
+  <h2>🌉 River Crossings</h2>
+  <div id="river-crossings">Loading river crossing status...</div>
 </div>
 
 <script>
@@ -91,9 +97,19 @@ const WEATHER_LAT = 51.48;
 const WEATHER_LON = 0.0;
 
 const SE_LONDON_RAIL_STATIONS = [
-  "LBG","CHX","WAE","LEW","GRN","DFD","BMS","ORP","ECR","VIC"
+  "LBG", "CHX", "WAE", "LEW", "GRN", "DFD", "BMS", "ORP", "ECR", "VIC"
 ];
+
 const TARGET_TOC_CODES = ["SE", "TL"];
+
+const ROAD_CROSSINGS = [
+  "blackwall tunnel",
+  "silvertown tunnel"
+];
+
+const LINE_CROSSINGS = [
+  "woolwich-ferry"
+];
 
 /* WEATHER */
 async function fetchWeather() {
@@ -119,9 +135,10 @@ function renderWeather(weatherData) {
   const temp = Math.round(current.main.temp);
   const feels = Math.round(current.main.feels_like);
 
-  container.innerHTML =
-    `<strong>SE London Weather</strong><br>
-     ${description}, ${temp}°C (feels like ${feels}°C)`;
+  container.innerHTML = `
+    <strong>SE London Weather</strong><br>
+    ${description}, ${temp}°C (feels like ${feels}°C)
+  `;
 }
 
 /* TFL */
@@ -139,6 +156,14 @@ async function fetchTfLLineStatus(modes) {
   return await resp.json();
 }
 
+async function fetchTfLRoadStatus(roads) {
+  const ids = roads.map(encodeURIComponent).join(",");
+  const url = `https://api.tfl.gov.uk/Road/${ids}/Status?app_key=${TFL_KEY}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(resp.status);
+  return await resp.json();
+}
+
 async function fetchNationalRailDelaysFromProxy() {
   if (NATIONAL_RAIL_API_PROXY_URL === "YOUR_NATIONAL_RAIL_API_PROXY_URL") return [];
 
@@ -147,8 +172,10 @@ async function fetchNationalRailDelaysFromProxy() {
       stations: SE_LONDON_RAIL_STATIONS.join(","),
       tocs: TARGET_TOC_CODES.join(",")
     });
+
     const url = `${NATIONAL_RAIL_API_PROXY_URL}?${params}`;
     const resp = await fetch(url);
+
     if (!resp.ok) throw new Error(resp.status);
     return await resp.json();
   } catch {
@@ -162,7 +189,6 @@ async function fetchAndRenderPublicTransportStatus() {
   let combinedList = [];
 
   try {
-    /* ✅ ONLY ADDITION: DLR INCLUDED */
     const tflLinesData = await fetchTfLLineStatus(
       "tube,elizabeth-line,overground,dlr"
     );
@@ -190,8 +216,7 @@ async function fetchAndRenderPublicTransportStatus() {
     });
 
     if (combinedList.length === 0) {
-      container.innerHTML =
-        "<p>All services running with a Good Service / No major delays.</p>";
+      container.innerHTML = "<p>All services running with a Good Service / No major delays.</p>";
       return;
     }
 
@@ -207,14 +232,14 @@ async function fetchAndRenderPublicTransportStatus() {
 
       if (item.type === "tfl-line") {
         div.className = `item ${sevClass} tube-line-item`;
-        div.innerHTML =
-          `<strong>${emoji} ${item.name}:</strong> ${item.status}${item.reason ? " – " + item.reason : ""}`;
+        div.innerHTML = `<strong>${emoji} ${item.name}:</strong> ${item.status}${item.reason ? " – " + item.reason : ""}`;
       } else {
         div.className = `item ${sevClass}`;
-        div.innerHTML =
-          `<strong>${emoji} Train from ${item.station} to ${item.destination}</strong><br>
-           Scheduled: ${item.scheduled}, Expected: ${item.expected} (Platform: ${item.platform || "TBC"})<br>
-           Status: <em>${item.status}</em>${item.delayReason ? " – " + item.delayReason : ""}`;
+        div.innerHTML = `
+          <strong>${emoji} Train from ${item.station} to ${item.destination}</strong><br>
+          Scheduled: ${item.scheduled}, Expected: ${item.expected} (Platform: ${item.platform || "TBC"})<br>
+          Status: <em>${item.status}</em>${item.delayReason ? " – " + item.delayReason : ""}
+        `;
       }
 
       container.appendChild(div);
@@ -225,49 +250,95 @@ async function fetchAndRenderPublicTransportStatus() {
   }
 }
 
-async function fetchAndRenderOtherStatus(containerId, lines, label) {
-  const container = document.getElementById(containerId);
-  try {
-    const data = await fetchTfLStatus(lines);
+function buildStatusCard({ name, status, detail, severity, goodLabel = "Good Service" }) {
+  const div = document.createElement("div");
 
-    if (!Array.isArray(data) || data.length === 0) {
-      container.textContent = `No ${label} status data available.`;
+  let sevClass = "low";
+  let emoji = "🟢";
+
+  const normalizedStatus = (status || "").toLowerCase();
+  const normalizedDetail = (detail || "").toLowerCase();
+
+  if (
+    normalizedStatus !== goodLabel.toLowerCase() &&
+    normalizedStatus !== "good"
+  ) {
+    sevClass = "medium";
+    emoji = "🟠";
+  }
+
+  if (
+    /closed|suspended|part suspended|severe|serious|restrictions?|no service/i.test(status || "") ||
+    /closed|suspended|severe|serious|restrictions?/i.test(detail || "") ||
+    severity === 1
+  ) {
+    sevClass = "high";
+    emoji = "🔴";
+  }
+
+  div.className = `item ${sevClass}`;
+  div.innerHTML = `
+    <strong>${emoji} ${name}:</strong> ${status || "Unknown"}
+    ${detail ? `<br><small>${detail}</small>` : ""}
+    ${severity !== undefined && severity !== null ? `<small style="display:block; opacity:0.6;">Severity: ${severity}</small>` : ""}
+  `;
+
+  return div;
+}
+
+async function fetchAndRenderRiverCrossings() {
+  const container = document.getElementById("river-crossings");
+  container.innerHTML = "";
+
+  try {
+    const [lineData, roadData] = await Promise.all([
+      fetchTfLStatus(LINE_CROSSINGS.join(",")),
+      fetchTfLRoadStatus(ROAD_CROSSINGS)
+    ]);
+
+    const items = [];
+
+    if (Array.isArray(lineData)) {
+      lineData.forEach(line => {
+        const statusObj = line.lineStatuses?.[0] || {};
+        items.push({
+          name: line.name || "Woolwich Ferry",
+          status: statusObj.statusSeverityDescription || "Unknown",
+          detail: statusObj.reason || "",
+          severity: statusObj.statusSeverity
+        });
+      });
+    }
+
+    if (Array.isArray(roadData)) {
+      roadData.forEach(road => {
+        const statusObj = road.statuses?.[0] || {};
+        items.push({
+          name: road.displayName || road.id,
+          status: road.statusSeverityDescription || statusObj.statusSeverityDescription || "Unknown",
+          detail: statusObj.description || statusObj.text || "",
+          severity: road.statusSeverity
+        });
+      });
+    }
+
+    if (items.length === 0) {
+      container.innerHTML = "<p>No river crossing status data available.</p>";
       return;
     }
 
-    container.innerHTML = "";
-    data.forEach(line => {
-      const statusObj = line.lineStatuses?.[0];
-      const status = statusObj?.statusSeverityDescription || "Unknown";
-      const reason = statusObj?.reason || "";
-      const severity = statusObj?.statusSeverity;
-
-      let sevClass = "low";
-      let emoji = "🟢";
-      if (status !== "Good Service") {
-        sevClass = "medium";
-        emoji = "🟠";
-      }
-
-      const d = document.createElement("div");
-      d.className = `item ${sevClass}`;
-      d.innerHTML = `
-        <strong>${emoji} ${line.name || label}:</strong> ${status}
-        ${reason ? `<br><small>${reason}</small>` : ""}
-        <small style="display:block; opacity:0.6;">Severity: ${severity}</small>
-      `;
-      container.appendChild(d);
+    items.forEach(item => {
+      container.appendChild(buildStatusCard(item));
     });
+
   } catch (err) {
-    container.textContent = `Error fetching ${label} status: ${err.message}`;
+    container.textContent = `Error fetching river crossings: ${err.message}`;
   }
 }
 
-
 async function updateTfL() {
   await fetchAndRenderPublicTransportStatus();
-  await fetchAndRenderOtherStatus("river", "rb1,rb6", "River Bus");
-  await fetchAndRenderOtherStatus("ferry", "woolwich-ferry", "Woolwich Ferry");
+  await fetchAndRenderRiverCrossings();
   setTimeout(updateTfL, REFRESH_INTERVAL_MS);
 }
 
