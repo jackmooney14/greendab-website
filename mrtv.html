@@ -142,98 +142,123 @@
   </div>
 
   <script>
-    const apiKey = 'c43b3437c0f093ed56bdc93a115e26a2';
-    const locations = [
-      { name: 'Abbey Wood', coordinates: { lat: 51.4933, lon: 0.1042 } },
-      { name: 'Bexleyheath', coordinates: { lat: 51.4563, lon: 0.1484 } },
-      { name: 'Blackheath', coordinates: { lat: 51.4675, lon: 0.0074 } },
-      { name: 'Charlton', coordinates: { lat: 51.4876, lon: 0.0167 } },
-      { name: 'Dartford', coordinates: { lat: 51.4432, lon: 0.2201 } },
-      { name: 'Eltham', coordinates: { lat: 51.4479, lon: 0.0602 } },
-      { name: 'Greenwich', coordinates: { lat: 51.4769, lon: -0.0005 } },
-      { name: 'Sidcup', coordinates: { lat: 51.4262, lon: 0.1037 } },
-      { name: 'Welling', coordinates: { lat: 51.4655, lon: 0.0875 } },
-      { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
-    ].sort((a, b) => a.name.localeCompare(b.name));
+  const apiKey = 'c43b3437c0f093ed56bdc93a115e26a2';
 
-    const icons = {
-      "clear sky": "☀️",
-      "few clouds": "🌤️",
-      "scattered clouds": "⛅",
-      "broken clouds": "🌥️",
-      "overcast clouds": "☁️",
-      "shower rain": "🌦️",
-      "rain": "🌧️",
-      "thunderstorm": "⛈️",
-      "snow": "❄️",
-      "mist": "🌫️"
-    };
+  const UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hour
 
-    async function getWeatherData(location) {
-      try {
-        const { lat, lon } = location.coordinates;
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        return { name: location.name, data };
-      } catch (e) {
-        console.error("Weather fetch error:", e);
-        return null;
-      }
+  const locations = [
+    { name: 'Abbey Wood', coordinates: { lat: 51.4933, lon: 0.1042 } },
+    { name: 'Bexleyheath', coordinates: { lat: 51.4563, lon: 0.1484 } },
+    { name: 'Blackheath', coordinates: { lat: 51.4675, lon: 0.0074 } },
+    { name: 'Charlton', coordinates: { lat: 51.4876, lon: 0.0167 } },
+    { name: 'Dartford', coordinates: { lat: 51.4432, lon: 0.2201 } },
+    { name: 'Eltham', coordinates: { lat: 51.4479, lon: 0.0602 } },
+    { name: 'Greenwich', coordinates: { lat: 51.4769, lon: -0.0005 } },
+    { name: 'Sidcup', coordinates: { lat: 51.4262, lon: 0.1037 } },
+    { name: 'Welling', coordinates: { lat: 51.4655, lon: 0.0875 } },
+    { name: 'Woolwich', coordinates: { lat: 51.4933, lon: 0.0722 } }
+  ].sort((a, b) => a.name.localeCompare(b.name));
+
+  const icons = {
+    "clear sky": "☀️",
+    "few clouds": "🌤️",
+    "scattered clouds": "⛅",
+    "broken clouds": "🌥️",
+    "overcast clouds": "☁️",
+    "shower rain": "🌦️",
+    "rain": "🌧️",
+    "light rain": "🌧️",
+    "moderate rain": "🌧️",
+    "heavy intensity rain": "🌧️",
+    "thunderstorm": "⛈️",
+    "snow": "❄️",
+    "mist": "🌫️"
+  };
+
+  async function getWeatherData(location) {
+    const { lat, lon } = location.coordinates;
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Weather API error: ${response.status}`);
     }
 
-    async function loadWeather() {
-      const weatherContainer = document.getElementById('weather-locations');
+    const data = await response.json();
+    return { name: location.name, data };
+  }
+
+  async function loadWeather() {
+    const weatherContainer = document.getElementById('weather-locations');
+    const bulletin = document.getElementById('weather-bulletin');
+
+    weatherContainer.innerHTML = '<p>Updating weather...</p>';
+
+    try {
+      const results = await Promise.allSettled(
+        locations.map(getWeatherData)
+      );
+
       weatherContainer.innerHTML = '';
 
-      const results = await Promise.all(locations.map(getWeatherData));
-      results.filter(Boolean).forEach(({ name, data }) => {
-        const condition = data.weather[0].description;
+      results.forEach(result => {
+        if (result.status !== 'fulfilled') return;
+
+        const { name, data } = result.value;
+        const condition = data.weather?.[0]?.description || 'Unknown';
         const icon = icons[condition] || "🌡️";
+        const temp = data.main?.temp;
 
         const el = document.createElement('div');
         el.classList.add('location');
+
         el.innerHTML = `
           <div class="location-name">${name}</div>
           <div class="weather-info">${icon} ${condition}</div>
-          <div class="weather-info">🌡️ ${data.main.temp.toFixed(1)}°C</div>
+          <div class="weather-info">🌡️ ${temp.toFixed(1)}°C</div>
         `;
+
         weatherContainer.appendChild(el);
       });
-    }
 
-    // Initial load
-    loadWeather();
-
-    // Refresh every 12 hours (20 calls/day max)
-    setInterval(loadWeather, 12 * 60 * 60 * 1000);
-
-    // Reload once per day at midnight
-    function scheduleMidnightReload() {
-      const now = new Date();
-      const midnight = new Date();
-      midnight.setHours(24, 0, 0, 0);
-      const timeout = midnight.getTime() - now.getTime();
-      setTimeout(() => location.reload(), timeout);
-    }
-    scheduleMidnightReload();
-
-    // Player.js setup
-    document.addEventListener("DOMContentLoaded", () => {
-      const iframe = document.getElementById("vidgrid-player");
-      iframe.addEventListener("load", () => {
-        try {
-          if (window.playerInstance) return; // prevent duplicates
-          window.playerInstance = new playerjs.Player(iframe);
-          window.playerInstance.on("ready", () => {
-            window.playerInstance.setControls(false);
-          });
-        } catch (e) {
-          console.warn("Player.js init failed:", e);
-        }
+      const updatedAt = new Date().toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
       });
+
+      bulletin.innerHTML = `
+        <p>Current weather in the areas surrounding Greenwich:</p>
+        <p style="font-size: 0.9em; opacity: 0.75;">Last updated: ${updatedAt}</p>
+      `;
+
+    } catch (error) {
+      console.error(error);
+      weatherContainer.innerHTML = '<p>Weather update failed. Trying again next hour.</p>';
+    }
+  }
+
+  loadWeather();
+  setInterval(loadWeather, UPDATE_INTERVAL);
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const iframe = document.getElementById("vidgrid-player");
+
+    iframe.addEventListener("load", () => {
+      try {
+        if (window.playerInstance) return;
+
+        window.playerInstance = new playerjs.Player(iframe);
+
+        window.playerInstance.on("ready", () => {
+          window.playerInstance.setControls(false);
+        });
+      } catch (e) {
+        console.warn("Player.js init failed:", e);
+      }
     });
-  </script>
+  });
+</script>
 
 </body>
 </html>
